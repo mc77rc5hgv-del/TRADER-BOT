@@ -8,6 +8,8 @@ router so the rest of the system only ever deals with canonical symbols.
 
 from __future__ import annotations
 
+import difflib
+
 DEFAULT_EXCHANGE = "binance"
 DEFAULT_QUOTE = "USDT"
 
@@ -90,6 +92,11 @@ _BASE_ALIASES: dict[str, str] = {
     "шиба": "SHIB",
 }
 
+# Canonical base tickers only (dedup of _BASE_ALIASES' values), used to
+# suggest close matches when a raw guess doesn't resolve confidently -
+# e.g. a noisy vision-extracted ticker (TZ section 2.1, step 4).
+KNOWN_BASE_TICKERS: frozenset[str] = frozenset(_BASE_ALIASES.values())
+
 
 def normalize_symbol(raw: str) -> str | None:
     """Resolve a free-form symbol reference to its canonical form.
@@ -132,3 +139,20 @@ def split_canonical_symbol(canonical: str) -> tuple[str, str]:
     """Split a canonical symbol ("BTCUSDT@binance") into (pair, exchange)."""
     pair, _, exchange = canonical.partition("@")
     return pair, exchange or DEFAULT_EXCHANGE
+
+
+def suggest_symbols(raw: str | None, limit: int = 3) -> list[str]:
+    """Close-match suggestions for a raw guess that didn't resolve
+    confidently — used for the "did you mean" buttons after a screenshot's
+    ticker can't be read exactly (TZ section 2.1, step 4)."""
+    if not raw:
+        return []
+
+    token = raw.strip().upper().split("/")[0].split("-")[0].split(" ")[0]
+    for quote in ("USDT", "USDC", "USD"):
+        if token.endswith(quote) and len(token) > len(quote):
+            token = token[: -len(quote)]
+            break
+
+    matches = difflib.get_close_matches(token, KNOWN_BASE_TICKERS, n=limit, cutoff=0.4)
+    return [f"{base}{DEFAULT_QUOTE}@{DEFAULT_EXCHANGE}" for base in matches]

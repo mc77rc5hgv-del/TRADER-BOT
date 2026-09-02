@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     # Shared market-state cache TTL, seconds (TZ section 5.3: 30-90s window)
     market_cache_ttl_seconds: int = 60
 
+    # Screenshot handling (TZ sections 6.4, 10). Local filesystem storage is
+    # a dev/MVP fallback behind the ScreenshotStorage interface - swap in an
+    # S3-compatible implementation for production without touching callers.
+    screenshot_storage_dir: str = "./data/screenshots"
+    screenshot_retention_days: int = 30
+    screenshot_max_bytes: int = 8 * 1024 * 1024
+
 
 @lru_cache
 def get_settings() -> Settings:

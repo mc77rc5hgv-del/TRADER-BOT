@@ -22,6 +22,9 @@ class FakeLLMProvider(LLMProvider):
         assert response_model is AnalysisNarrative
         return self.narrative, LLMUsage(model="fake-model", input_tokens=120, output_tokens=40)
 
+    async def extract_chart_info(self, image_bytes, media_type):
+        raise NotImplementedError("not exercised by these tests")
+
 
 def _snapshot() -> TechnicalSnapshot:
     return TechnicalSnapshot(

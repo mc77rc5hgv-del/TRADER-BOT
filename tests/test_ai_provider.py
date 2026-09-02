@@ -1,7 +1,8 @@
 from types import SimpleNamespace
 
 from app.ai.provider import AnthropicProvider
-from app.ai.schemas import AnalysisNarrative, WhyBullet
+from app.ai.schemas import AnalysisNarrative, VisionExtraction, WhyBullet
+from app.ai.vision_prompt import VISION_SYSTEM_PROMPT
 
 
 class FakeMessagesAPI:
@@ -41,3 +42,27 @@ async def test_anthropic_provider_returns_parsed_output_and_usage() -> None:
     assert fake_client.messages.last_kwargs["system"] == "system"
     assert fake_client.messages.last_kwargs["output_format"] is AnalysisNarrative
     assert fake_client.messages.last_kwargs["messages"] == [{"role": "user", "content": "user"}]
+
+
+async def test_anthropic_provider_extract_chart_info_sends_image_block() -> None:
+    extraction = VisionExtraction(
+        symbol_guess="BTC/USDT", timeframe_guess="15m", exchange_guess="Binance", confidence="high"
+    )
+    fake_client = FakeAnthropicClient(extraction)
+    provider = AnthropicProvider(model="claude-opus-5", client=fake_client)
+
+    result, usage = await provider.extract_chart_info(b"fake-bytes", "image/jpeg")
+
+    assert result is extraction
+    assert usage.input_tokens == 100
+
+    kwargs = fake_client.messages.last_kwargs
+    assert kwargs["system"] == VISION_SYSTEM_PROMPT
+    assert kwargs["output_format"] is VisionExtraction
+
+    content = kwargs["messages"][0]["content"]
+    image_block = next(b for b in content if b["type"] == "image")
+    assert image_block["source"]["media_type"] == "image/jpeg"
+    assert image_block["source"]["type"] == "base64"
+    text_block = next(b for b in content if b["type"] == "text")
+    assert text_block["text"]

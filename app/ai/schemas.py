@@ -61,3 +61,17 @@ class AnalysisResult(BaseModel):
     risk_reward: float | None
     why: list[WhyBullet]
     disclaimer: str
+
+
+class VisionExtraction(BaseModel):
+    """What the vision model is allowed to read off a chart screenshot: the
+    symbol/exchange/timeframe labels only. It must never report prices or
+    indicator values — those always come from the Market Data Engine (TZ
+    section 2.1: "скрин используется только для визуального контекста").
+    Raw guesses here are not yet canonical symbols/timeframes; callers
+    resolve them via app.market.symbols / app.ai.timeframe."""
+
+    symbol_guess: str | None
+    timeframe_guess: str | None
+    exchange_guess: str | None
+    confidence: str  # "high" | "medium" | "low" - the model's own self-assessment

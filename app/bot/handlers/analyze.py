@@ -1,7 +1,6 @@
 """/analyze command and free-text symbol lookup (TZ section 4.2: "Свободный
 текст и фото обрабатываются Intent Router (без обязательной команды)").
-Screenshot input (the vision half of the Intent Router) is not wired up yet
-— that's a later build step (TZ section 13, step 6)."""
+Screenshot input lives in app/bot/handlers/screenshot.py."""
 
 from __future__ import annotations
 
@@ -12,6 +11,7 @@ from aiogram.types import Message
 from app.ai.dependencies import get_llm_provider
 from app.ai.pipeline import SymbolNotRecognizedError, run_chat_analysis
 from app.ai.render import render_text
+from app.ai.timeframe import DEFAULT_TF
 from app.bot.repository import get_or_create_user
 from app.db.session import async_session_factory
 from app.market.router import get_market_data_engine
@@ -19,7 +19,6 @@ from app.market.schemas import ALLOWED_TIMEFRAMES
 
 router = Router(name="analyze")
 
-DEFAULT_TF = "1h"
 UNRECOGNIZED_SYMBOL_TEXT = (
     "Не удалось распознать актив. Попробуйте /analyze <тикер> [tf], например /analyze BTC 4h."
 )

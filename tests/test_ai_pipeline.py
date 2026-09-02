@@ -28,6 +28,9 @@ class FakeLLMProvider(LLMProvider):
         narrative = AnalysisNarrative(why=[WhyBullet(sign="+", text="test")])
         return narrative, LLMUsage(model="fake-model", input_tokens=10, output_tokens=5)
 
+    async def extract_chart_info(self, image_bytes, media_type):
+        raise NotImplementedError("not exercised by these tests")
+
 
 async def test_unresolved_symbol_raises(fake_redis, db_session) -> None:
     engine = MarketDataEngine(FakeBinanceClient([100.0] * 30), fake_redis)

@@ -12,11 +12,10 @@ from app.db.session import async_session_factory
 router = Router(name="menu")
 
 # Scanner still reflects where it stands in the Phase 1 build sequence
-# (TZ section 13) — its pipeline lands in a later step. AI analysis is wired
-# up (see app/bot/handlers/analyze.py); screenshot input is not yet.
+# (TZ section 13) — its pipeline lands in a later step. Text and screenshot
+# analysis are both wired up (see app/bot/handlers/analyze.py and screenshot.py).
 AI_ANALYSIS_PROMPT = (
-    "✨ Напишите тикер, например BTC или ETH 4h — пришлю разбор.\n\n"
-    "Приём скриншотов графика появится на одном из следующих этапов."
+    "✨ Напишите тикер (например BTC или ETH 4h) или пришлите скриншот графика — пришлю разбор."
 )
 SCANNER_PLACEHOLDER = (
     "🔥 Scanner ещё не запущен — появится вместе с фоновым обсчётом топ-активов "
