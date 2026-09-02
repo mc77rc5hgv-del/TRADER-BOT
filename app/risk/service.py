@@ -15,6 +15,22 @@ STOP_BUFFER_ATR_MULT = 0.10
 STOP_FALLBACK_ATR_MULT = 1.0
 TARGET_R_MULTIPLES = (1.5, 3.0)
 
+# ATR/price ratio thresholds for the coarse risk_level label (TZ section 4.3's
+# "Risk: Medium" line) — not a volatility forecast, just a bucket for display.
+LOW_VOLATILITY_RATIO = 0.01
+HIGH_VOLATILITY_RATIO = 0.03
+
+
+def classify_risk_level(snapshot: TechnicalSnapshot) -> str:
+    if snapshot.atr is None or snapshot.price <= 0:
+        return "medium"
+    volatility_ratio = snapshot.atr / snapshot.price
+    if volatility_ratio < LOW_VOLATILITY_RATIO:
+        return "low"
+    if volatility_ratio < HIGH_VOLATILITY_RATIO:
+        return "medium"
+    return "high"
+
 
 def compute(snapshot: TechnicalSnapshot, direction: str) -> RiskLevels:
     if direction not in ("long", "short"):
@@ -62,4 +78,5 @@ def compute(snapshot: TechnicalSnapshot, direction: str) -> RiskLevels:
         invalidation=round(invalidation, 8),
         targets=[round(t, 8) for t in targets],
         risk_reward=TARGET_R_MULTIPLES[0],
+        risk_level=classify_risk_level(snapshot),
     )

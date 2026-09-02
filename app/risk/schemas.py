@@ -12,3 +12,4 @@ class RiskLevels(BaseModel):
     invalidation: float
     targets: list[float]
     risk_reward: float  # reward:risk ratio to the first target
+    risk_level: str  # "low" | "medium" | "high" - see classify_risk_level()

@@ -1,6 +1,6 @@
 import pytest
 
-from app.risk.service import compute
+from app.risk.service import classify_risk_level, compute
 from app.ta.schemas import TechnicalSnapshot
 
 
@@ -69,3 +69,18 @@ def test_long_ignores_support_below_atr_fallback() -> None:
     far_support = compute(_snapshot(nearest_support=50.0), "long")
     no_support = compute(_snapshot(nearest_support=None), "long")
     assert far_support.invalidation == no_support.invalidation
+
+
+def test_compute_includes_risk_level() -> None:
+    result = compute(_snapshot(), "long")
+    assert result.risk_level in ("low", "medium", "high")
+
+
+def test_classify_risk_level_buckets_by_atr_over_price() -> None:
+    assert classify_risk_level(_snapshot(price=100.0, atr=0.5)) == "low"  # 0.5%
+    assert classify_risk_level(_snapshot(price=100.0, atr=2.0)) == "medium"  # 2%
+    assert classify_risk_level(_snapshot(price=100.0, atr=5.0)) == "high"  # 5%
+
+
+def test_classify_risk_level_defaults_to_medium_without_atr() -> None:
+    assert classify_risk_level(_snapshot(atr=None)) == "medium"

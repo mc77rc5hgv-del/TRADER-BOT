@@ -6,7 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from app.bot.handlers import menu, start
+from app.bot.handlers import analyze, menu, start
 from app.config import get_settings
 
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +28,9 @@ async def main() -> None:
 
     dp.include_router(start.router)
     dp.include_router(menu.router)
+    # analyze.router registers a catch-all free-text handler last, so it
+    # never shadows the commands/callbacks above it.
+    dp.include_router(analyze.router)
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)

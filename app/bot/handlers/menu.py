@@ -11,12 +11,12 @@ from app.db.session import async_session_factory
 
 router = Router(name="menu")
 
-# These reflect where each feature stands in the Phase 1 build sequence
-# (TZ section 13) — the pipelines behind them land in later steps.
-AI_ANALYSIS_PLACEHOLDER = (
-    "✨ Пришлите тикер (например BTC) или скриншот графика.\n\n"
-    "Движок анализа (technical/probability/risk engine) подключается на "
-    "следующих этапах разработки — сейчас доступен только сбор запроса."
+# Scanner still reflects where it stands in the Phase 1 build sequence
+# (TZ section 13) — its pipeline lands in a later step. AI analysis is wired
+# up (see app/bot/handlers/analyze.py); screenshot input is not yet.
+AI_ANALYSIS_PROMPT = (
+    "✨ Напишите тикер, например BTC или ETH 4h — пришлю разбор.\n\n"
+    "Приём скриншотов графика появится на одном из следующих этапов."
 )
 SCANNER_PLACEHOLDER = (
     "🔥 Scanner ещё не запущен — появится вместе с фоновым обсчётом топ-активов "
@@ -33,7 +33,7 @@ async def cmd_app(message: Message) -> None:
 
 @router.callback_query(F.data == CB_AI_ANALYSIS)
 async def on_ai_analysis(callback: CallbackQuery) -> None:
-    await callback.message.answer(AI_ANALYSIS_PLACEHOLDER)
+    await callback.message.answer(AI_ANALYSIS_PROMPT)
     await callback.answer()
 
 

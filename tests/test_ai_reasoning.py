@@ -50,6 +50,7 @@ def _risk() -> RiskLevels:
         invalidation=110950.0,
         targets=[113600.0, 114900.0],
         risk_reward=1.5,
+        risk_level="medium",
     )
 
 
