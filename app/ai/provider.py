@@ -44,12 +44,19 @@ class LLMProvider(ABC):
 class AnthropicProvider(LLMProvider):
     def __init__(self, model: str, client: anthropic.AsyncAnthropic | None = None) -> None:
         self._model = model
-        self._client = client or anthropic.AsyncAnthropic()
+        # Resolve SDK credentials lazily so the deterministic analysis path can
+        # still start and gracefully degrade when no production LLM key exists.
+        self._client = client
+
+    def _client_or_default(self) -> anthropic.AsyncAnthropic:
+        if self._client is None:
+            self._client = anthropic.AsyncAnthropic()
+        return self._client
 
     async def generate_structured(
         self, system_prompt: str, user_prompt: str, response_model: type[T]
     ) -> tuple[T, LLMUsage]:
-        response = await self._client.messages.parse(
+        response = await self._client_or_default().messages.parse(
             model=self._model,
             max_tokens=2048,
             system=system_prompt,
@@ -67,7 +74,7 @@ class AnthropicProvider(LLMProvider):
         self, image_bytes: bytes, media_type: str
     ) -> tuple[VisionExtraction, LLMUsage]:
         image_b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
-        response = await self._client.messages.parse(
+        response = await self._client_or_default().messages.parse(
             model=self._model,
             max_tokens=1024,
             system=VISION_SYSTEM_PROMPT,
