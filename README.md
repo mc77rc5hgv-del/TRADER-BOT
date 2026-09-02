@@ -3,7 +3,7 @@
 AI-платформа для трейдинга внутри Telegram (бот + Mini App). Продуктовое и
 техническое ТЗ MVP — в [`docs/TZ_MVP.md`](docs/TZ_MVP.md).
 
-Текущий этап: **Phase 1, шаг 11 — Billing v0** (см. раздел 13 ТЗ).
+Текущий этап: **Phase 1, шаг 12 — AI Accuracy + внутренняя аналитика** (см. раздел 13 ТЗ).
 
 ## Стек
 
@@ -300,6 +300,62 @@ Two tiers, FREE and PRO (TZ раздел 8/9), с оплатой через Tele
   подтверждается сразу (`ok=True`) — проверять тут нечего, товар один и с
   фиксированной ценой. `successful_payment` вызывает
   `activate_pro_subscription()` и подтверждает активацию сообщением.
+
+## AI Accuracy v0
+
+Публичная статистика по Prediction Ledger (TZ раздел 3.6) — сколько прогнозов
+дали результат и с каким win rate, обновляется раз в сутки фоновой джобой,
+не в реальном времени.
+
+- `app/ai/accuracy.py` — `run_evaluation()` сверяет каждый ещё не оценённый
+  `Prediction` с реальными свечами (через тот же Market Data Engine) и
+  выставляет `outcome`: `tp1_reached` / `tp2_reached` / `stop_hit` /
+  `expired_no_hit` (после `EXPIRY_CANDLE_HORIZON` = 100 свечей без касания
+  цели или стопа). Свеча, чей диапазон захватывает и цель, и инвалидацию
+  одновременно, засчитывается в пользу стопа — консервативное допущение,
+  когда порядок касаний внутри свечи неизвестен. `outcome`/
+  `outcome_evaluated_at` — единственные поля `Prediction`, которые разрешено
+  менять после создания (см. immutability-guard в `app/ai/models.py`).
+- `compute_accuracy_report()` агрегирует за последние 30 дней: всего
+  прогнозов, win rate, средний реализованный R (по `TARGET_R_MULTIPLES` из
+  risk-движка), разбивку по топ-5 активам и по TF.
+- `app/ai/accuracy_worker.py` (`python -m app.ai.accuracy_worker`, раз в
+  сутки) оценивает исходы и кладёт отчёт в Redis (`accuracy:report`,
+  TTL 2 дня) — ни бот, ни Mini App отчёт не пересчитывают на лету.
+- `GET /webapp/accuracy` — публичный эндпоинт (initData не требуется, как и
+  у Scanner), отдаёт закэшированный отчёт с фоллбеком на живой расчёт, если
+  джоба ещё не отработала. Экран `/accuracy` в Mini App (карточки метрик +
+  разбивки), ссылка с экрана Market. В боте — кнопка «📊 Точность AI» в
+  главном меню.
+- Для сопоставления уже-канонического символа `Prediction.symbol`
+  (например `"BTCUSDT@binance"`) обратно в Market Data Engine
+  `normalize_symbol()` (`app/market/symbols.py`) сделан идемпотентным —
+  раньше он принимал только «сырые» пользовательские строки и не узнавал
+  собственный же canonical-вывод.
+
+## Внутренняя аналитика (админ)
+
+Минимум для MVP из TZ раздела 11 — не веб-дашборд, а скрипт с прямым
+доступом к БД (веб-админки/авторизации в v0 ещё нет):
+
+```bash
+python -m app.admin.report_cli
+```
+
+- `app/admin/analytics.py` — `compute_cost_report()` (стоимость AI-запросов
+  по дням, топ пользователей по затратам, latency p50/p95 — всё из
+  `ai_requests`), `compute_activity_report()` (DAU/WAU по
+  `User.last_active_at`), `compute_conversion_report()` (Free→Pro conversion
+  rate и churn за последние 30 дней).
+- `User.last_active_at` — новое поле, обновляется на каждый вызов
+  `get_or_create_user()` (`app/bot/repository.py`), то есть почти на любое
+  взаимодействие с ботом или Mini App — самый дешёвый достаточный сигнал
+  активности без отдельного трекинга событий.
+- Churn считается через `expires_at`, а не через `Subscription.status`:
+  каждая покупка — новая строка в статусе ACTIVE (см. Billing v0 выше),
+  поэтому `status` в этой системе никогда не переходит в EXPIRED/CANCELED
+  сам по себе. «Churn» — это последняя подписка пользователя истекла в
+  пределах окна и с тех пор не продлевалась.
 
 ## Тесты
 

@@ -2,14 +2,17 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.accuracy import compute_accuracy_report, get_cached_accuracy_report
 from app.ai.dependencies import get_llm_provider
 from app.ai.pipeline import SymbolNotRecognizedError, run_chat_analysis
 from app.ai.provider import LLMProvider
-from app.ai.schemas import AnalysisResult
+from app.ai.schemas import AccuracyReport, AnalysisResult
 from app.bot.repository import get_or_create_user
 from app.config import get_settings
+from app.core.redis import get_redis
 from app.db.session import get_session
 from app.market.router import get_market_data_engine
 from app.market.service import MarketDataEngine
@@ -87,3 +90,17 @@ async def webapp_analyze(
         raise HTTPException(status_code=404, detail=f"Symbol not recognized: {exc}") from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/accuracy", response_model=AccuracyReport)
+async def webapp_accuracy(
+    redis: Redis = Depends(get_redis),  # noqa: B008
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> AccuracyReport:
+    """Public screen (TZ section 3.6) — no initData auth required, same as
+    the Scanner endpoint. Serves the daily-refreshed cache; falls back to a
+    live (uncached) computation only if the worker hasn't populated it yet."""
+    cached = await get_cached_accuracy_report(redis)
+    if cached is not None:
+        return cached
+    return await compute_accuracy_report(session)

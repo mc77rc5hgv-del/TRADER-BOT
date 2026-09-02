@@ -35,6 +35,7 @@ def upgrade() -> None:
         ),
         sa.Column("preferred_markets", sa.JSON(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
+        sa.Column("last_active_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     )
     op.create_index("ix_users_telegram_id", "users", ["telegram_id"], unique=True)
 

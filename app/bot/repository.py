@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -5,12 +7,16 @@ from app.users.models import PreferredMarket, RiskProfile, TradingStyle, User
 
 
 async def get_or_create_user(session: AsyncSession, telegram_id: int, username: str | None) -> User:
+    """Called on essentially every bot/webapp interaction - also the one
+    place that bumps last_active_at, which is what DAU/WAU (TZ section 11)
+    is computed from."""
     result = await session.execute(select(User).where(User.telegram_id == telegram_id))
     user = result.scalar_one_or_none()
     if user is not None:
+        user.last_active_at = datetime.now(UTC)
         if username and user.username != username:
             user.username = username
-            await session.commit()
+        await session.commit()
         return user
 
     user = User(telegram_id=telegram_id, username=username)

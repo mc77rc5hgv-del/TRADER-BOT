@@ -75,3 +75,24 @@ class VisionExtraction(BaseModel):
     timeframe_guess: str | None
     exchange_guess: str | None
     confidence: str  # "high" | "medium" | "low" - the model's own self-assessment
+
+
+class AccuracyBreakdownRow(BaseModel):
+    """One row of the by-symbol or by-tf breakdown (TZ section 3.6)."""
+
+    key: str
+    total_predictions: int
+    win_rate: float | None  # None until at least one prediction has resolved
+
+
+class AccuracyReport(BaseModel):
+    """Public Prediction Ledger accuracy report (TZ section 3.6), refreshed
+    once a day by app.ai.accuracy_worker rather than computed per request."""
+
+    window_days: int
+    total_predictions: int
+    resolved_predictions: int
+    win_rate: float | None
+    avg_realized_r: float | None
+    by_symbol: list[AccuracyBreakdownRow]
+    by_tf: list[AccuracyBreakdownRow]

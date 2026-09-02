@@ -1,5 +1,5 @@
 import { getInitData } from "./telegram";
-import type { AnalysisResult, MarketState, ScannerResponse } from "./types";
+import type { AccuracyReport, AnalysisResult, MarketState, ScannerResponse } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -54,4 +54,8 @@ export function getScannerResults(direction?: string, risk?: string): Promise<Sc
   if (risk) params.set("risk", risk);
   const query = params.toString();
   return request<ScannerResponse>(`/scanner${query ? `?${query}` : ""}`);
+}
+
+export function getAccuracyReport(): Promise<AccuracyReport> {
+  return request<AccuracyReport>("/webapp/accuracy");
 }

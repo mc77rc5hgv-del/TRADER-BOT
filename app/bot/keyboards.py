@@ -13,6 +13,7 @@ CB_AI_ANALYSIS = "menu:ai_analysis"
 CB_SCANNER = "menu:scanner"
 CB_ALERTS = "menu:alerts"
 CB_BILLING = "menu:billing"
+CB_ACCURACY = "menu:accuracy"
 
 # Callback data for the subscription screen (TZ section 8)
 CB_BILLING_BUY = "billing:buy"
@@ -47,6 +48,7 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
     rows.append([InlineKeyboardButton(text="🔥 ЛУЧШИЕ СЕТАПЫ", callback_data=CB_SCANNER)])
     rows.append([InlineKeyboardButton(text="🔔 АЛЕРТЫ", callback_data=CB_ALERTS)])
     rows.append([InlineKeyboardButton(text="💳 Подписка", callback_data=CB_BILLING)])
+    rows.append([InlineKeyboardButton(text="📊 Точность AI", callback_data=CB_ACCURACY)])
 
     return InlineKeyboardMarkup(inline_keyboard=rows)
 

@@ -13,6 +13,7 @@ from app.market.symbols import normalize_symbol, split_canonical_symbol, suggest
         ("btc-usdt", "BTCUSDT@binance"),
         ("btc usdt", "BTCUSDT@binance"),
         ("BTCUSDT", "BTCUSDT@binance"),
+        ("BTCUSDT@binance", "BTCUSDT@binance"),  # idempotent on its own canonical output
         ("bitcoin", "BTCUSDT@binance"),
         ("биткоин", "BTCUSDT@binance"),
         ("эфир", "ETHUSDT@binance"),

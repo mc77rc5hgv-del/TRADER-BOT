@@ -39,9 +39,17 @@ export default function MarketPage() {
 
       <Link
         href="/scanner"
-        className="mb-6 flex items-center justify-between rounded-xl bg-zinc-900 px-4 py-3 hover:bg-zinc-800"
+        className="mb-2 flex items-center justify-between rounded-xl bg-zinc-900 px-4 py-3 hover:bg-zinc-800"
       >
         <span className="font-medium text-zinc-100">🔥 Лучшие сетапы</span>
+        <span className="text-zinc-500">→</span>
+      </Link>
+
+      <Link
+        href="/accuracy"
+        className="mb-6 flex items-center justify-between rounded-xl bg-zinc-900 px-4 py-3 hover:bg-zinc-800"
+      >
+        <span className="font-medium text-zinc-100">📊 Точность AI</span>
         <span className="text-zinc-500">→</span>
       </Link>
 

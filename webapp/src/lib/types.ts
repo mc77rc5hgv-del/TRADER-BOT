@@ -81,3 +81,21 @@ export interface ScannerResponse {
   entries: ScannerEntry[];
   updated_at: string | null;
 }
+
+// Mirrors app/ai/schemas.py's AccuracyReport/AccuracyBreakdownRow.
+
+export interface AccuracyBreakdownRow {
+  key: string;
+  total_predictions: number;
+  win_rate: number | null;
+}
+
+export interface AccuracyReport {
+  window_days: number;
+  total_predictions: number;
+  resolved_predictions: number;
+  win_rate: number | null;
+  avg_realized_r: number | null;
+  by_symbol: AccuracyBreakdownRow[];
+  by_tf: AccuracyBreakdownRow[];
+}
