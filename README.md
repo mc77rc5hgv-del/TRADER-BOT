@@ -3,7 +3,7 @@
 AI-платформа для трейдинга внутри Telegram (бот + Mini App). Продуктовое и
 техническое ТЗ MVP — в [`docs/TZ_MVP.md`](docs/TZ_MVP.md).
 
-Текущий этап: **Phase 1, шаг 6 — скриншот-сценарий (Vision Extractor)** (см. раздел 13 ТЗ).
+Текущий этап: **Phase 1, шаг 7 — Mini App shell** (см. раздел 13 ТЗ).
 
 ## Стек
 
@@ -12,7 +12,7 @@ AI-платформа для трейдинга внутри Telegram (бот + 
 - DB: PostgreSQL (async, SQLAlchemy 2.0) + Alembic
 - Cache/queues: Redis
 - LLM: Anthropic Claude (`claude-opus-5` по умолчанию) через provider-agnostic интерфейс
-- Mini App frontend: появится на шаге 7 (пока не реализован)
+- Mini App frontend: Next.js (App Router) + TypeScript + Tailwind, `webapp/`
 
 ## Быстрый старт (dev)
 
@@ -33,6 +33,12 @@ python -m app.bot.main
 
 # Live-цены через WS (в отдельном терминале, опционально для dev)
 python -m app.market.ws_worker
+
+# Mini App (в отдельном терминале)
+cd webapp
+cp .env.local.example .env.local
+npm install
+npm run dev
 ```
 
 ## Market Data Engine
@@ -145,6 +151,43 @@ Low/Medium/High по отношению ATR к цене — использует
 Тесты используют `FakeLLMProvider`/фейковый Anthropic-клиент — реальных
 сетевых вызовов в тестовом наборе нет.
 
+## Mini App shell (`webapp/`)
+
+Next.js App Router + TypeScript + Tailwind, авторизация через Telegram
+WebApp `initData` (TZ раздел 10), два рабочих таба — Home и Market (AI и
+Profile в нижней навигации показаны как «скоро», под них ничего не построено).
+
+**Backend (`app/webapp/`):**
+- `app/webapp/auth.py:validate_init_data()` — проверка HMAC-подписи
+  `initData` по алгоритму Telegram (`secret = HMAC-SHA256("WebAppData",
+  bot_token)`, затем `HMAC-SHA256(secret, data_check_string)`), плюс проверка
+  свежести `auth_date`. Никогда не доверяет `user.id` без этой проверки.
+- `POST /webapp/auth` — валидирует `Authorization: tma <initData>`,
+  создаёт/находит пользователя, возвращает профиль. Дальнейшие защищённые
+  эндпоинты переиспользуют `get_validated_init_data` как FastAPI-зависимость.
+- CORS настроен через `CORS_ALLOW_ORIGINS` в `.env` (по умолчанию
+  `http://localhost:3000`; `MINI_APP_URL`, если задан, добавляется
+  автоматически).
+
+**Frontend (`webapp/src/`):**
+- `lib/telegram.ts` — обёртка над `window.Telegram.WebApp` (SDK грузится
+  напрямую скриптом `telegram-web-app.js` в `app/layout.tsx`, без отдельного
+  npm-пакета — так он всегда обновлён на стороне Telegram).
+- `lib/api.ts` — fetch-клиент, добавляет `Authorization: tma <initData>` к
+  каждому запросу к backend.
+- `app/page.tsx` (Home) — Market Pulse: цена + суточное изменение по топ-5
+  ликвидных активов (тот же список, что в `ws_worker.TRACKED_SYMBOLS`).
+- `app/market/page.tsx` + `app/market/[symbol]/page.tsx` — поиск/быстрые
+  ссылки на активы и экран инструмента: переключатель TF (1m/5m/15m/1h/4h/1d)
+  и свечной график на `lightweight-charts` v5 (`chart.addSeries(CandlestickSeries,
+  …)` — актуальный API для этой мажорной версии, отличается от v4).
+
+Прогон через реальный браузер (Playwright, headless Chromium) подтвердил:
+рендер всех трёх экранов, переключение TF, и сам свечной график — на
+синтетических данных, так как исходящий IP этого dev-окружения
+геоблокируется Binance (HTTP 451); в проде/на обычном хостинге это
+ограничение отсутствует.
+
 ## Тесты
 
 ```bash
@@ -165,7 +208,9 @@ app/
   billing/             # подписки (Free/Pro)
   users/               # пользователи, watchlist
   bot/                 # aiogram: хендлеры, клавиатуры, FSM онбординга
+  webapp/              # Telegram WebApp initData validation, /webapp/auth
 migrations/            # Alembic
+webapp/                # Mini App: Next.js + TypeScript + Tailwind (отдельный npm-проект)
 docs/TZ_MVP.md          # полное ТЗ
 ```
 

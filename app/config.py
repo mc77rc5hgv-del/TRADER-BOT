@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     # https URL of the deployed Mini App (empty until Phase 1 step 7 ships it)
     mini_app_url: str = ""
 
+    # Comma-separated CORS origins the API accepts requests from (the Mini
+    # App's dev server by default; mini_app_url is added automatically).
+    cors_allow_origins: str = "http://localhost:3000"
+
     # Shared market-state cache TTL, seconds (TZ section 5.3: 30-90s window)
     market_cache_ttl_seconds: int = 60
 
@@ -32,6 +36,13 @@ class Settings(BaseSettings):
     screenshot_storage_dir: str = "./data/screenshots"
     screenshot_retention_days: int = 30
     screenshot_max_bytes: int = 8 * 1024 * 1024
+
+    @property
+    def cors_allow_origins_list(self) -> list[str]:
+        origins = [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
+        if self.mini_app_url and self.mini_app_url not in origins:
+            origins.append(self.mini_app_url)
+        return origins
 
 
 @lru_cache
