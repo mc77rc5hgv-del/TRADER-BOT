@@ -37,6 +37,14 @@ export default function MarketPage() {
         </button>
       </form>
 
+      <Link
+        href="/scanner"
+        className="mb-6 flex items-center justify-between rounded-xl bg-zinc-900 px-4 py-3 hover:bg-zinc-800"
+      >
+        <span className="font-medium text-zinc-100">🔥 Лучшие сетапы</span>
+        <span className="text-zinc-500">→</span>
+      </Link>
+
       <p className="mb-2 text-sm text-zinc-500">Популярные активы</p>
       <div className="flex flex-wrap gap-2">
         {TRACKED_SYMBOLS.map((symbol) => (

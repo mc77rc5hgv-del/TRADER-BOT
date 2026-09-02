@@ -61,3 +61,23 @@ export interface AnalysisResult {
   why: WhyBullet[];
   disclaimer: string;
 }
+
+// Mirrors app/scanner/schemas.py.
+
+export type ScannerDirection = "long" | "short" | "neutral";
+export type RiskLevel = "low" | "medium" | "high";
+
+export interface ScannerEntry {
+  symbol: string;
+  tf: string;
+  direction: ScannerDirection;
+  confidence: number;
+  risk_reward: number | null;
+  risk_level: RiskLevel | null;
+  price: number;
+}
+
+export interface ScannerResponse {
+  entries: ScannerEntry[];
+  updated_at: string | null;
+}

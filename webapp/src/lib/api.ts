@@ -1,5 +1,5 @@
 import { getInitData } from "./telegram";
-import type { AnalysisResult, MarketState } from "./types";
+import type { AnalysisResult, MarketState, ScannerResponse } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -46,4 +46,12 @@ export function analyzeSymbol(symbol: string, tf: string): Promise<AnalysisResul
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ symbol, tf }),
   });
+}
+
+export function getScannerResults(direction?: string, risk?: string): Promise<ScannerResponse> {
+  const params = new URLSearchParams();
+  if (direction) params.set("direction", direction);
+  if (risk) params.set("risk", risk);
+  const query = params.toString();
+  return request<ScannerResponse>(`/scanner${query ? `?${query}` : ""}`);
 }

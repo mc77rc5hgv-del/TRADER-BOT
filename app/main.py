@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.market.router import router as market_router
+from app.scanner.router import router as scanner_router
 from app.webapp.router import router as webapp_router
 
 settings = get_settings()
@@ -18,6 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(market_router)
+app.include_router(scanner_router)
 app.include_router(webapp_router)
 
 
