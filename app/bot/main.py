@@ -6,7 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from app.bot.handlers import analyze, menu, screenshot, start
+from app.bot.handlers import alerts, analyze, menu, screenshot, start
 from app.config import get_settings
 
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +29,10 @@ async def main() -> None:
     dp.include_router(start.router)
     dp.include_router(menu.router)
     dp.include_router(screenshot.router)
+    # alerts.router has state-scoped free-text handlers (symbol/price input
+    # during alert creation) that must be checked before analyze.router's
+    # catch-all, or the catch-all would swallow them.
+    dp.include_router(alerts.router)
     # analyze.router registers a catch-all free-text handler last, so it
     # never shadows the commands/callbacks above it.
     dp.include_router(analyze.router)

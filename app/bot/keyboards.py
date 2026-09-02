@@ -19,6 +19,11 @@ CB_RISK_PREFIX = "onboarding:risk:"
 CB_MARKETS_PREFIX = "onboarding:markets:"
 CB_SKIP = "onboarding:skip"
 
+# Callback data for alert creation (TZ section 13 step 9)
+CB_ALERT_NEW = "alerts:new"
+CB_ALERT_DIRECTION_PREFIX = "alerts:dir:"
+CB_ALERT_CANCEL = "alerts:cancel"
+
 
 def main_menu_keyboard() -> InlineKeyboardMarkup:
     rows = [
@@ -39,6 +44,30 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
     rows.append([InlineKeyboardButton(text="🔔 АЛЕРТЫ", callback_data=CB_ALERTS)])
 
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def alerts_list_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text="+ Создать алерт", callback_data=CB_ALERT_NEW)]]
+    )
+
+
+def alert_direction_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Выше ⬆️", callback_data=f"{CB_ALERT_DIRECTION_PREFIX}above"),
+                InlineKeyboardButton(text="Ниже ⬇️", callback_data=f"{CB_ALERT_DIRECTION_PREFIX}below"),
+            ],
+            [InlineKeyboardButton(text="Отмена", callback_data=CB_ALERT_CANCEL)],
+        ]
+    )
+
+
+def alert_cancel_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text="Отмена", callback_data=CB_ALERT_CANCEL)]]
+    )
 
 
 def trading_style_keyboard() -> InlineKeyboardMarkup:

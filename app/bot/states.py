@@ -7,3 +7,11 @@ class Onboarding(StatesGroup):
     trading_style = State()
     risk_profile = State()
     preferred_markets = State()
+
+
+class AlertCreation(StatesGroup):
+    """Price alert creation flow (TZ section 13 step 9)."""
+
+    symbol = State()
+    direction = State()
+    price = State()
