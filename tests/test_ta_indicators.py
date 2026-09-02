@@ -4,7 +4,9 @@ from app.market.schemas import Candle
 from app.ta.indicators import atr_latest, ema_latest, rsi_latest, volume_trend
 
 
-def _flat_range_candles(count: int, high: float = 105, low: float = 95, close: float = 100) -> list[Candle]:
+def _flat_range_candles(
+    count: int, high: float = 105, low: float = 95, close: float = 100
+) -> list[Candle]:
     start = datetime(2024, 1, 1, tzinfo=UTC)
     return [
         Candle(

@@ -85,7 +85,9 @@ def _first_hit(
     return None
 
 
-async def evaluate_prediction(prediction: Prediction, market_engine: MarketDataEngine) -> PredictionOutcome | None:
+async def evaluate_prediction(
+    prediction: Prediction, market_engine: MarketDataEngine
+) -> PredictionOutcome | None:
     """Returns the outcome to record, or None if it's still too early to
     tell (caller should leave the prediction pending)."""
     market_state = await market_engine.get_market_state(prediction.symbol, prediction.tf)
@@ -164,7 +166,9 @@ def _breakdown(
     return rows[:top] if top is not None else rows
 
 
-async def compute_accuracy_report(db_session: AsyncSession, days: int = REPORT_WINDOW_DAYS) -> AccuracyReport:
+async def compute_accuracy_report(
+    db_session: AsyncSession, days: int = REPORT_WINDOW_DAYS
+) -> AccuracyReport:
     """Aggregates the Prediction Ledger over the last `days` days (TZ 3.6).
     Directionless (neutral) predictions never produce a tradeable setup, so
     they're excluded the same way run_evaluation excludes them."""
@@ -184,7 +188,9 @@ async def compute_accuracy_report(db_session: AsyncSession, days: int = REPORT_W
         total_predictions=len(predictions),
         resolved_predictions=len(resolved),
         win_rate=(len(wins) / len(resolved) * 100) if resolved else None,
-        avg_realized_r=(sum(_REALIZED_R[p.outcome] for p in resolved) / len(resolved)) if resolved else None,
+        avg_realized_r=(sum(_REALIZED_R[p.outcome] for p in resolved) / len(resolved))
+        if resolved
+        else None,
         by_symbol=_breakdown(predictions, lambda p: p.symbol, top=5),
         by_tf=_breakdown(predictions, lambda p: p.tf, top=None),
     )

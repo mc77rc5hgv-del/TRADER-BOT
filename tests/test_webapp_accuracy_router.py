@@ -49,7 +49,9 @@ async def test_accuracy_endpoint_returns_cache_when_present(fake_redis, db_sessi
     assert body["win_rate"] == 100.0
 
 
-async def test_accuracy_endpoint_falls_back_to_live_compute_on_cache_miss(fake_redis, db_session) -> None:
+async def test_accuracy_endpoint_falls_back_to_live_compute_on_cache_miss(
+    fake_redis, db_session
+) -> None:
     db_session.add(_prediction())
     await db_session.commit()
 

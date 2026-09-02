@@ -11,7 +11,9 @@ from app.webapp.auth import InvalidInitDataError, validate_init_data
 BOT_TOKEN = "123456:FAKE_TEST_TOKEN"
 
 
-def _make_init_data(bot_token: str = BOT_TOKEN, auth_date: int | None = None, **extra_fields) -> str:
+def _make_init_data(
+    bot_token: str = BOT_TOKEN, auth_date: int | None = None, **extra_fields
+) -> str:
     fields = {
         "query_id": "AAABBBCCC",
         "user": json.dumps({"id": 42, "first_name": "Test", "username": "tester"}),

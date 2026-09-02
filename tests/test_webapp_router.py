@@ -94,7 +94,9 @@ async def test_analyze_returns_resolved_setup(fake_redis, db_session) -> None:
     try:
         client = TestClient(app)
         response = client.post(
-            "/webapp/analyze", json={"symbol": "BTC", "tf": "1h"}, headers={"Authorization": "tma fake"}
+            "/webapp/analyze",
+            json={"symbol": "BTC", "tf": "1h"},
+            headers={"Authorization": "tma fake"},
         )
     finally:
         app.dependency_overrides.clear()

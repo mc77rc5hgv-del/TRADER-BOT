@@ -93,7 +93,9 @@ async def on_alert_symbol(message: Message, state: FSMContext) -> None:
 
     await state.update_data(symbol=raw.upper())
     await state.set_state(AlertCreation.direction)
-    await message.answer("Выше или ниже какой цены сообщить?", reply_markup=alert_direction_keyboard())
+    await message.answer(
+        "Выше или ниже какой цены сообщить?", reply_markup=alert_direction_keyboard()
+    )
 
 
 @router.callback_query(AlertCreation.direction, F.data.startswith(CB_ALERT_DIRECTION_PREFIX))
@@ -111,7 +113,9 @@ async def on_alert_price(message: Message, state: FSMContext) -> None:
     try:
         price = float(raw)
     except ValueError:
-        await message.answer("Введите число, например: 111800", reply_markup=alert_cancel_keyboard())
+        await message.answer(
+            "Введите число, например: 111800", reply_markup=alert_cancel_keyboard()
+        )
         return
     if price <= 0:
         await message.answer("Цена должна быть больше нуля.", reply_markup=alert_cancel_keyboard())

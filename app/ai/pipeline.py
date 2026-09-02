@@ -85,7 +85,9 @@ async def run_chat_analysis(
     )
     latency_ms = int((datetime.now(UTC) - started_at).total_seconds() * 1000)
 
-    await record_ai_request(db_session, user_id, _AI_REQUEST_TYPE_BY_SOURCE[source], usage, latency_ms)
+    await record_ai_request(
+        db_session, user_id, _AI_REQUEST_TYPE_BY_SOURCE[source], usage, latency_ms
+    )
 
     if risk is not None:
         db_session.add(

@@ -8,10 +8,16 @@ from app.ai.schemas import AnalysisResult
 
 
 def render_text(result: AnalysisResult) -> str:
-    lines = [f"{result.symbol} · {result.tf}", f"Структура: {result.structure_bias.capitalize()}", ""]
+    lines = [
+        f"{result.symbol} · {result.tf}",
+        f"Структура: {result.structure_bias.capitalize()}",
+        "",
+    ]
 
     if result.scenarios is None:
-        lines.append("⚪ Явного направленного перевеса нет — боковик, недостаточно данных для сделки.")
+        lines.append(
+            "⚪ Явного направленного перевеса нет — боковик, недостаточно данных для сделки."
+        )
     else:
         lines.extend(_render_scenarios(result))
 

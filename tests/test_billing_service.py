@@ -87,7 +87,9 @@ async def test_get_active_subscription_returns_row_for_pro_user(db_session) -> N
 async def test_activate_pro_subscription_sets_expiry(db_session) -> None:
     user = await _make_user(db_session, 6)
     before = datetime.now(UTC)
-    subscription = await activate_pro_subscription(db_session, user.id, "telegram_stars", "charge_3")
+    subscription = await activate_pro_subscription(
+        db_session, user.id, "telegram_stars", "charge_3"
+    )
 
     assert subscription.expires_at is not None
     expires_at = subscription.expires_at

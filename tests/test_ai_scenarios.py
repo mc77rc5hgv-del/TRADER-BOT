@@ -14,7 +14,9 @@ def test_long_scenarios_sum_to_100() -> None:
     assert scenarios is not None
     assert scenarios.primary_direction == "long"
     assert scenarios.primary_confidence == 64.0
-    total = scenarios.primary_confidence + scenarios.opposite_confidence + scenarios.neutral_confidence
+    total = (
+        scenarios.primary_confidence + scenarios.opposite_confidence + scenarios.neutral_confidence
+    )
     assert round(total, 1) == 100.0
 
 

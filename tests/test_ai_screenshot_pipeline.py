@@ -64,7 +64,9 @@ async def test_resolved_symbol_runs_full_pipeline(fake_redis, db_session) -> Non
     closes = generate_trend("up", cycles=6)
     engine = MarketDataEngine(FakeBinanceClient(closes), fake_redis)
     provider = FakeLLMProvider(
-        VisionExtraction(symbol_guess="BTC", timeframe_guess="1h", exchange_guess="Binance", confidence="high")
+        VisionExtraction(
+            symbol_guess="BTC", timeframe_guess="1h", exchange_guess="Binance", confidence="high"
+        )
     )
     storage = FakeScreenshotStorage()
 
@@ -90,11 +92,15 @@ async def test_resolved_symbol_runs_full_pipeline(fake_redis, db_session) -> Non
     assert types == {"vision_extraction", "screenshot_analysis"}
 
 
-async def test_ambiguous_symbol_returns_suggestions_without_prediction(fake_redis, db_session) -> None:
+async def test_ambiguous_symbol_returns_suggestions_without_prediction(
+    fake_redis, db_session
+) -> None:
     closes = generate_trend("up", cycles=6)
     engine = MarketDataEngine(FakeBinanceClient(closes), fake_redis)
     provider = FakeLLMProvider(
-        VisionExtraction(symbol_guess="BTX", timeframe_guess=None, exchange_guess=None, confidence="low")
+        VisionExtraction(
+            symbol_guess="BTX", timeframe_guess=None, exchange_guess=None, confidence="low"
+        )
     )
     storage = FakeScreenshotStorage()
 
@@ -116,7 +122,9 @@ async def test_unresolved_symbol_no_suggestions(fake_redis, db_session) -> None:
     closes = generate_trend("up", cycles=6)
     engine = MarketDataEngine(FakeBinanceClient(closes), fake_redis)
     provider = FakeLLMProvider(
-        VisionExtraction(symbol_guess=None, timeframe_guess=None, exchange_guess=None, confidence="low")
+        VisionExtraction(
+            symbol_guess=None, timeframe_guess=None, exchange_guess=None, confidence="low"
+        )
     )
     storage = FakeScreenshotStorage()
 
@@ -131,7 +139,9 @@ async def test_unresolved_symbol_no_suggestions(fake_redis, db_session) -> None:
 async def test_invalid_image_short_circuits_before_storage(fake_redis, db_session) -> None:
     engine = MarketDataEngine(FakeBinanceClient([100.0] * 30), fake_redis)
     provider = FakeLLMProvider(
-        VisionExtraction(symbol_guess="BTC", timeframe_guess="1h", exchange_guess=None, confidence="high")
+        VisionExtraction(
+            symbol_guess="BTC", timeframe_guess="1h", exchange_guess=None, confidence="high"
+        )
     )
     storage = FakeScreenshotStorage()
 
@@ -153,13 +163,19 @@ async def test_over_quota_rejects_before_vision_call(fake_redis, db_session) -> 
     free_limit = TIER_LIMITS[SubscriptionTier.FREE].ai_analyses_per_day
     for _ in range(free_limit):
         await record_ai_request(
-            db_session, user.id, "chat_analysis", LLMUsage(model="fake-model", input_tokens=1, output_tokens=1), 1
+            db_session,
+            user.id,
+            "chat_analysis",
+            LLMUsage(model="fake-model", input_tokens=1, output_tokens=1),
+            1,
         )
 
     closes = generate_trend("up", cycles=6)
     engine = MarketDataEngine(FakeBinanceClient(closes), fake_redis)
     provider = FakeLLMProvider(
-        VisionExtraction(symbol_guess="BTC", timeframe_guess="1h", exchange_guess="Binance", confidence="high")
+        VisionExtraction(
+            symbol_guess="BTC", timeframe_guess="1h", exchange_guess="Binance", confidence="high"
+        )
     )
     storage = FakeScreenshotStorage()
 

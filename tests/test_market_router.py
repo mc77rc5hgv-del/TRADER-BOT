@@ -24,7 +24,9 @@ def _sample_state() -> MarketState:
         symbol="BTCUSDT@binance",
         tf="1h",
         ticker=Ticker(symbol="BTCUSDT", price=111480.5, price_change_percent_24h=2.14),
-        candles=[Candle(open_time=now, open=100, high=105, low=95, close=102, volume=10, close_time=now)],
+        candles=[
+            Candle(open_time=now, open=100, high=105, low=95, close=102, volume=10, close_time=now)
+        ],
         fetched_at=now,
     )
 

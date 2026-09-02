@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import UTC, datetime
 
 from redis.asyncio import Redis
@@ -26,6 +27,8 @@ class MarketDataEngine:
         self._client = client
         self._redis = redis
         self._cache_ttl_seconds = cache_ttl_seconds
+        self._inflight: dict[str, asyncio.Task[MarketState]] = {}
+        self._inflight_guard = asyncio.Lock()
 
     async def get_market_state(self, symbol_raw: str, tf: str) -> MarketState | None:
         """Returns None when the symbol can't be resolved. Raises ValueError
@@ -39,6 +42,29 @@ class MarketDataEngine:
             return None
 
         cache_key = f"{CACHE_KEY_PREFIX}:{canonical}:{tf}"
+        cached = await self._redis.get(cache_key)
+        if cached:
+            return MarketState.model_validate_json(cached)
+
+        # Single-flight: a burst of identical cache misses shares one exchange
+        # fetch inside this worker instead of stampeding Binance.
+        async with self._inflight_guard:
+            task = self._inflight.get(cache_key)
+            if task is None:
+                task = asyncio.create_task(self._fetch_and_cache(canonical, tf, cache_key))
+                self._inflight[cache_key] = task
+
+        try:
+            return await asyncio.shield(task)
+        finally:
+            if task.done():
+                async with self._inflight_guard:
+                    if self._inflight.get(cache_key) is task:
+                        self._inflight.pop(cache_key, None)
+
+    async def _fetch_and_cache(self, canonical: str, tf: str, cache_key: str) -> MarketState:
+        # Re-check after joining the critical section: another process may
+        # have populated Redis while this worker was waiting.
         cached = await self._redis.get(cache_key)
         if cached:
             return MarketState.model_validate_json(cached)

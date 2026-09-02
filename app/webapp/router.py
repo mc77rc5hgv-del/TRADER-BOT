@@ -85,7 +85,9 @@ async def webapp_analyze(
     the Mini App's AI tab is another front door onto it, not a separate
     implementation (TZ section 8: "тот же ответ, что в боте")."""
     try:
-        return await run_chat_analysis(payload.symbol, payload.tf, market_engine, llm_provider, session, user.id)
+        return await run_chat_analysis(
+            payload.symbol, payload.tf, market_engine, llm_provider, session, user.id
+        )
     except SymbolNotRecognizedError as exc:
         raise HTTPException(status_code=404, detail=f"Symbol not recognized: {exc}") from exc
     except ValueError as exc:

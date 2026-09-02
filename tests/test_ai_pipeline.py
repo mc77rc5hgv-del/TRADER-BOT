@@ -48,7 +48,9 @@ async def test_long_setup_persists_prediction_and_ai_request(fake_redis, db_sess
     closes = generate_trend("up", cycles=6)  # bullish structure, enough history for ATR/RSI
     engine = MarketDataEngine(FakeBinanceClient(closes), fake_redis)
 
-    result = await run_chat_analysis("BTC", "1h", engine, FakeLLMProvider(), db_session, user_id=None)
+    result = await run_chat_analysis(
+        "BTC", "1h", engine, FakeLLMProvider(), db_session, user_id=None
+    )
 
     assert result.scenarios is not None
     assert result.scenarios.primary_direction == "long"
@@ -83,7 +85,9 @@ async def test_neutral_direction_records_usage_but_no_prediction(
         ),
     )
 
-    result = await run_chat_analysis("BTC", "1h", engine, FakeLLMProvider(), db_session, user_id=None)
+    result = await run_chat_analysis(
+        "BTC", "1h", engine, FakeLLMProvider(), db_session, user_id=None
+    )
 
     assert result.scenarios is None
     assert (await db_session.execute(select(Prediction))).scalars().all() == []

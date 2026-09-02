@@ -9,7 +9,9 @@ from app.users.models import User
 
 async def count_active_alerts(session: AsyncSession, user_id: int) -> int:
     result = await session.execute(
-        select(func.count()).select_from(Alert).where(Alert.user_id == user_id, Alert.status == AlertStatus.ACTIVE)
+        select(func.count())
+        .select_from(Alert)
+        .where(Alert.user_id == user_id, Alert.status == AlertStatus.ACTIVE)
     )
     return result.scalar_one()
 

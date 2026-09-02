@@ -84,7 +84,9 @@ async def test_analyze_uses_deterministic_numbers_not_llm() -> None:
 
 async def test_analyze_neutral_direction_has_no_trade_setup() -> None:
     neutral_probability = ProbabilityResult(direction="neutral", confidence=35.0, factors={})
-    provider = FakeLLMProvider(AnalysisNarrative(why=[WhyBullet(sign="+", text="Без явного перевеса")]))
+    provider = FakeLLMProvider(
+        AnalysisNarrative(why=[WhyBullet(sign="+", text="Без явного перевеса")])
+    )
 
     result, _usage = await analyze(
         provider, "BTCUSDT@binance", "4h", _snapshot(), neutral_probability, None
@@ -104,6 +106,27 @@ async def test_analyze_sends_compressed_context_not_raw_candles() -> None:
     assert "candle" not in provider.last_user_prompt.lower()  # no raw OHLCV series
 
 
+async def test_analyze_gracefully_degrades_when_llm_is_unavailable() -> None:
+    class FailingProvider(FakeLLMProvider):
+        async def generate_structured(self, system_prompt, user_prompt, response_model):
+            raise RuntimeError("provider unavailable")
+
+    result, usage = await analyze(
+        FailingProvider(AnalysisNarrative(why=[])),
+        "BTCUSDT@binance",
+        "4h",
+        _snapshot(),
+        _probability(),
+        _risk(),
+    )
+
+    assert result.entry_low == 111800.0
+    assert result.scenarios is not None
+    assert "временно недоступно" in result.why[0].text
+    assert usage.model == "degraded-no-llm"
+    assert usage.input_tokens == 0
+
+
 def test_render_text_always_includes_disclaimer() -> None:
     narrative = [WhyBullet(sign="+", text="test")]
     from app.ai.schemas import AnalysisResult, ScenarioSplit
@@ -113,7 +136,10 @@ def test_render_text_always_includes_disclaimer() -> None:
         tf="4h",
         structure_bias="bullish",
         scenarios=ScenarioSplit(
-            primary_direction="long", primary_confidence=64.0, opposite_confidence=27.0, neutral_confidence=9.0
+            primary_direction="long",
+            primary_confidence=64.0,
+            opposite_confidence=27.0,
+            neutral_confidence=9.0,
         ),
         entry_low=111800.0,
         entry_high=112300.0,

@@ -56,7 +56,7 @@ def atr_latest(candles: list[Candle], period: int = 14) -> float | None:
 
 
 def volume_trend(candles: list[Candle], window: int = 10) -> str:
-    """"rising" / "falling" / "flat" based on recent vs. prior average volume."""
+    """ "rising" / "falling" / "flat" based on recent vs. prior average volume."""
     if len(candles) < window * 2:
         return "flat"
 

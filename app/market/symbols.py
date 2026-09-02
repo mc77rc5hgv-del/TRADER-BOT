@@ -101,7 +101,9 @@ KNOWN_BASE_TICKERS: frozenset[str] = frozenset(_BASE_ALIASES.values())
 # recognize a string that's already in canonical form (see the "@" branch
 # below), since DEFAULT_QUOTE is the only quote currency the canonical form
 # ever uses.
-_KNOWN_CANONICAL_PAIRS: frozenset[str] = frozenset(f"{base}{DEFAULT_QUOTE}" for base in KNOWN_BASE_TICKERS)
+_KNOWN_CANONICAL_PAIRS: frozenset[str] = frozenset(
+    f"{base}{DEFAULT_QUOTE}" for base in KNOWN_BASE_TICKERS
+)
 
 
 def normalize_symbol(raw: str) -> str | None:

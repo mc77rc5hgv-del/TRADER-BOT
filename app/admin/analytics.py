@@ -116,12 +116,16 @@ async def compute_activity_report(session: AsyncSession) -> ActivityReport:
     now = datetime.now(UTC)
     dau_count = (
         await session.execute(
-            select(func.count()).select_from(User).where(User.last_active_at >= now - timedelta(days=1))
+            select(func.count())
+            .select_from(User)
+            .where(User.last_active_at >= now - timedelta(days=1))
         )
     ).scalar_one()
     wau_count = (
         await session.execute(
-            select(func.count()).select_from(User).where(User.last_active_at >= now - timedelta(days=7))
+            select(func.count())
+            .select_from(User)
+            .where(User.last_active_at >= now - timedelta(days=7))
         )
     ).scalar_one()
     return ActivityReport(dau=dau_count, wau=wau_count)

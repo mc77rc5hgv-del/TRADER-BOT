@@ -61,7 +61,9 @@ async def on_photo(message: Message) -> None:
     async with async_session_factory() as session:
         user = await get_or_create_user(session, message.from_user.id, message.from_user.username)
         try:
-            outcome = await run_screenshot_analysis(image_bytes, engine, provider, storage, session, user.id)
+            outcome = await run_screenshot_analysis(
+                image_bytes, engine, provider, storage, session, user.id
+            )
         except QuotaExceededError as exc:
             await message.answer(quota_exceeded_text(exc.limit))
             return
@@ -102,7 +104,13 @@ async def on_symbol_choice(callback: CallbackQuery) -> None:
         user = await get_or_create_user(session, callback.from_user.id, callback.from_user.username)
         try:
             result = await run_chat_analysis(
-                symbol, DEFAULT_TF, engine, provider, session, user.id, source=PredictionSource.SCREENSHOT
+                symbol,
+                DEFAULT_TF,
+                engine,
+                provider,
+                session,
+                user.id,
+                source=PredictionSource.SCREENSHOT,
             )
         except QuotaExceededError as exc:
             await callback.message.answer(quota_exceeded_text(exc.limit))

@@ -10,7 +10,9 @@ from datetime import UTC, datetime, timedelta
 from app.market.schemas import Candle
 
 
-def make_candles(closes: list[float], volumes: list[float] | None = None, wick: float = 0.05) -> list[Candle]:
+def make_candles(
+    closes: list[float], volumes: list[float] | None = None, wick: float = 0.05
+) -> list[Candle]:
     """`wick` is added/subtracted from each candle's own close — not
     max/min(open, close) — so a candle's high/low never coincides with its
     neighbor's (which would happen whenever one candle's open equals the
@@ -71,7 +73,9 @@ def generate_trend(
     return closes
 
 
-def generate_range(cycles: int = 4, leg_len: int = 3, step: float = 2.0, start: float = 100.0) -> list[float]:
+def generate_range(
+    cycles: int = 4, leg_len: int = 3, step: float = 2.0, start: float = 100.0
+) -> list[float]:
     """Symmetric up/down legs of equal size — no net drift, alternating
     swing highs/lows of roughly equal height (a sideways market)."""
     closes = [start]

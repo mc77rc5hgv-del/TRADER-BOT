@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     # Shared market-state cache TTL, seconds (TZ section 5.3: 30-90s window)
     market_cache_ttl_seconds: int = 60
 
+    # Coarse API abuse protection. Billing quotas remain the authoritative
+    # per-user limit for paid AI work; this protects all HTTP endpoints from
+    # bursts before they reach application code.
+    rate_limit_requests: int = 120
+    rate_limit_window_seconds: int = 60
+
     # Screenshot handling (TZ sections 6.4, 10). Local filesystem storage is
     # a dev/MVP fallback behind the ScreenshotStorage interface - swap in an
     # S3-compatible implementation for production without touching callers.
@@ -39,7 +45,9 @@ class Settings(BaseSettings):
 
     @property
     def cors_allow_origins_list(self) -> list[str]:
-        origins = [origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()]
+        origins = [
+            origin.strip() for origin in self.cors_allow_origins.split(",") if origin.strip()
+        ]
         if self.mini_app_url and self.mini_app_url not in origins:
             origins.append(self.mini_app_url)
         return origins

@@ -31,7 +31,7 @@ def find_swing_points(
 
 
 def classify_structure(candles: list[Candle]) -> str:
-    """"bullish" when the last two swing highs and lows are both rising
+    """ "bullish" when the last two swing highs and lows are both rising
     (HH+HL), "bearish" when both are falling (LH+LL), "neutral" otherwise
     (mixed signals or not enough swing points yet)."""
     highs, lows = find_swing_points(candles)
@@ -51,7 +51,9 @@ def classify_structure(candles: list[Candle]) -> str:
     return "neutral"
 
 
-def nearest_levels(candles: list[Candle], current_price: float) -> tuple[float | None, float | None]:
+def nearest_levels(
+    candles: list[Candle], current_price: float
+) -> tuple[float | None, float | None]:
     """Nearest swing-low below price (support) and swing-high above price
     (resistance)."""
     highs, lows = find_swing_points(candles)

@@ -20,7 +20,9 @@ async def _make_user(db_session, telegram_id: int, last_active_at: datetime | No
     return user
 
 
-def _ai_request(user_id: int | None, cost_usd: float, latency_ms: int, created_at: datetime) -> AIRequest:
+def _ai_request(
+    user_id: int | None, cost_usd: float, latency_ms: int, created_at: datetime
+) -> AIRequest:
     return AIRequest(
         user_id=user_id,
         type="chat_analysis",
@@ -54,7 +56,9 @@ async def test_cost_report_aggregates_by_day_and_user(db_session) -> None:
             _ai_request(user_a.id, cost_usd=2.0, latency_ms=200, created_at=now),
             _ai_request(user_b.id, cost_usd=0.5, latency_ms=300, created_at=now),
             _ai_request(None, cost_usd=0.25, latency_ms=50, created_at=now),  # scanner, no user
-            _ai_request(user_b.id, cost_usd=5.0, latency_ms=999, created_at=now - timedelta(days=60)),  # too old
+            _ai_request(
+                user_b.id, cost_usd=5.0, latency_ms=999, created_at=now - timedelta(days=60)
+            ),  # too old
         ]
     )
     await db_session.commit()
@@ -78,7 +82,9 @@ async def test_cost_report_aggregates_by_day_and_user(db_session) -> None:
 async def test_cost_report_top_n_limits_results(db_session) -> None:
     now = datetime.now(UTC)
     users = [await _make_user(db_session, i) for i in range(100, 105)]
-    db_session.add_all([_ai_request(u.id, cost_usd=1.0, latency_ms=10, created_at=now) for u in users])
+    db_session.add_all(
+        [_ai_request(u.id, cost_usd=1.0, latency_ms=10, created_at=now) for u in users]
+    )
     await db_session.commit()
 
     report = await compute_cost_report(db_session, top_n=2)

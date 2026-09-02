@@ -46,7 +46,9 @@ class User(Base):
     # Bumped on every get_or_create_user() call (app/bot/repository.py) - the
     # only per-request signal cheap enough to update on nearly every bot/
     # webapp interaction. Backs the DAU/WAU figures in TZ section 11.
-    last_active_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_active_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     watchlist_items: Mapped[list["WatchlistItem"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"

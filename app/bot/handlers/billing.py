@@ -64,7 +64,9 @@ async def on_billing(callback: CallbackQuery) -> None:
         user = await get_or_create_user(session, callback.from_user.id, callback.from_user.username)
         text, show_buy_button = await _billing_text(session, user.id)
 
-    await callback.message.answer(text, reply_markup=billing_keyboard(show_buy_button=show_buy_button))
+    await callback.message.answer(
+        text, reply_markup=billing_keyboard(show_buy_button=show_buy_button)
+    )
     await callback.answer()
 
 

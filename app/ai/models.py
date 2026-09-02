@@ -79,13 +79,17 @@ class Prediction(Base):
     invalidation: Mapped[float] = mapped_column(Float, nullable=False)
     risk_level: Mapped[RiskLevel] = mapped_column(Enum(RiskLevel, name="prediction_risk_level"))
     factors: Mapped[dict] = mapped_column(JSON, nullable=False)
-    source: Mapped[PredictionSource] = mapped_column(Enum(PredictionSource, name="prediction_source"))
+    source: Mapped[PredictionSource] = mapped_column(
+        Enum(PredictionSource, name="prediction_source")
+    )
     model_version: Mapped[str] = mapped_column(String(50), nullable=False)
 
     outcome: Mapped[PredictionOutcome | None] = mapped_column(
         Enum(PredictionOutcome, name="prediction_outcome"), nullable=True
     )
-    outcome_evaluated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    outcome_evaluated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -133,6 +137,8 @@ class Screenshot(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     storage_key: Mapped[str] = mapped_column(String(512), nullable=False)
-    uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    uploaded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

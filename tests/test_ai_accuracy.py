@@ -22,7 +22,15 @@ CREATED_AT = datetime(2024, 1, 1, tzinfo=UTC)
 def _candle(hours_after_creation: int, high: float, low: float) -> Candle:
     open_time = CREATED_AT + timedelta(hours=hours_after_creation)
     mid = (high + low) / 2
-    return Candle(open_time=open_time, open=mid, high=high, low=low, close=mid, volume=1.0, close_time=open_time + timedelta(hours=1))
+    return Candle(
+        open_time=open_time,
+        open=mid,
+        high=high,
+        low=low,
+        close=mid,
+        volume=1.0,
+        close_time=open_time + timedelta(hours=1),
+    )
 
 
 class FakeBinanceClient:
@@ -172,12 +180,31 @@ async def test_compute_accuracy_report_aggregates_resolved_predictions(db_sessio
     now = datetime.now(UTC)
     db_session.add_all(
         [
-            _make_prediction(symbol="BTCUSDT@binance", tf="1h", created_at=now, outcome=PredictionOutcome.TP1_REACHED),
-            _make_prediction(symbol="BTCUSDT@binance", tf="1h", created_at=now, outcome=PredictionOutcome.STOP_HIT),
-            _make_prediction(symbol="ETHUSDT@binance", tf="4h", created_at=now, outcome=PredictionOutcome.TP2_REACHED),
-            _make_prediction(symbol="ETHUSDT@binance", tf="4h", created_at=now, outcome=None),  # still pending
+            _make_prediction(
+                symbol="BTCUSDT@binance",
+                tf="1h",
+                created_at=now,
+                outcome=PredictionOutcome.TP1_REACHED,
+            ),
+            _make_prediction(
+                symbol="BTCUSDT@binance",
+                tf="1h",
+                created_at=now,
+                outcome=PredictionOutcome.STOP_HIT,
+            ),
+            _make_prediction(
+                symbol="ETHUSDT@binance",
+                tf="4h",
+                created_at=now,
+                outcome=PredictionOutcome.TP2_REACHED,
+            ),
+            _make_prediction(
+                symbol="ETHUSDT@binance", tf="4h", created_at=now, outcome=None
+            ),  # still pending
             _make_prediction(direction=PredictionDirection.NEUTRAL, created_at=now),  # excluded
-            _make_prediction(created_at=now - timedelta(days=60), outcome=PredictionOutcome.TP1_REACHED),  # too old
+            _make_prediction(
+                created_at=now - timedelta(days=60), outcome=PredictionOutcome.TP1_REACHED
+            ),  # too old
         ]
     )
     await db_session.commit()
@@ -212,7 +239,9 @@ async def test_compute_accuracy_report_empty_has_none_rates(db_session) -> None:
 async def test_accuracy_report_cache_round_trip(fake_redis, db_session) -> None:
     assert await get_cached_accuracy_report(fake_redis) is None
 
-    db_session.add(_make_prediction(created_at=datetime.now(UTC), outcome=PredictionOutcome.TP1_REACHED))
+    db_session.add(
+        _make_prediction(created_at=datetime.now(UTC), outcome=PredictionOutcome.TP1_REACHED)
+    )
     await db_session.commit()
     report = await compute_accuracy_report(db_session)
 

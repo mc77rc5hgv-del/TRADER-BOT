@@ -16,7 +16,9 @@ class FakeMessagesAPI:
         self.last_kwargs = kwargs
         return SimpleNamespace(
             parsed_output=self._parsed_output,
-            usage=SimpleNamespace(input_tokens=self._input_tokens, output_tokens=self._output_tokens),
+            usage=SimpleNamespace(
+                input_tokens=self._input_tokens, output_tokens=self._output_tokens
+            ),
         )
 
 

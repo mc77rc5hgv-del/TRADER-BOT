@@ -8,12 +8,20 @@ from __future__ import annotations
 from app.ai.context import build_context
 from app.ai.prompt import SYSTEM_PROMPT, build_user_prompt
 from app.ai.provider import LLMProvider, LLMUsage
-from app.ai.schemas import AnalysisNarrative, AnalysisResult
+from app.ai.schemas import AnalysisNarrative, AnalysisResult, WhyBullet
 from app.probability.schemas import ProbabilityResult
 from app.risk.schemas import RiskLevels
 from app.ta.schemas import TechnicalSnapshot
 
-DISCLAIMER = "⚠️ Это вероятностный анализ, а не финансовая рекомендация. Проверяйте риски самостоятельно."
+DISCLAIMER = (
+    "⚠️ Это вероятностный анализ, а не финансовая рекомендация. Проверяйте риски самостоятельно."
+)
+DEGRADED_WHY = [
+    WhyBullet(
+        sign="-",
+        text="AI-пояснение временно недоступно; уровни и вероятности рассчитаны техническими моделями.",
+    )
+]
 
 
 async def analyze(
@@ -25,9 +33,15 @@ async def analyze(
     risk: RiskLevels | None,
 ) -> tuple[AnalysisResult, LLMUsage]:
     context = build_context(symbol, tf, snapshot, probability, risk)
-    narrative, usage = await provider.generate_structured(
-        SYSTEM_PROMPT, build_user_prompt(context), AnalysisNarrative
-    )
+    try:
+        narrative, usage = await provider.generate_structured(
+            SYSTEM_PROMPT, build_user_prompt(context), AnalysisNarrative
+        )
+    except Exception:  # noqa: BLE001 - provider boundary must degrade on any SDK/schema failure
+        # The numeric analysis is deterministic and still useful when the LLM
+        # provider is degraded. Do not turn a narrator outage into a 500.
+        narrative = AnalysisNarrative(why=DEGRADED_WHY)
+        usage = LLMUsage(model="degraded-no-llm", input_tokens=0, output_tokens=0)
 
     result = AnalysisResult(
         symbol=symbol,

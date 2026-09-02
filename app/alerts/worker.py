@@ -29,17 +29,23 @@ logger = logging.getLogger(__name__)
 POLL_INTERVAL_SECONDS = 30
 
 
-async def check_alerts_once(bot: Bot, market_engine: MarketDataEngine, db_session: AsyncSession) -> None:
+async def check_alerts_once(
+    bot: Bot, market_engine: MarketDataEngine, db_session: AsyncSession
+) -> None:
     rows = await list_active_price_alerts_with_users(db_session)
 
     for alert, user in rows:
         try:
             market_state = await market_engine.get_market_state(alert.symbol, DEFAULT_TF)
         except Exception:
-            logger.exception("Failed to fetch market state for alert %s (%s)", alert.id, alert.symbol)
+            logger.exception(
+                "Failed to fetch market state for alert %s (%s)", alert.id, alert.symbol
+            )
             continue
         if market_state is None:
-            logger.warning("Alert %s has an unresolvable symbol %r — skipping", alert.id, alert.symbol)
+            logger.warning(
+                "Alert %s has an unresolvable symbol %r — skipping", alert.id, alert.symbol
+            )
             continue
 
         try:

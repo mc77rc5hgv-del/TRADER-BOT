@@ -5,9 +5,7 @@ from app.market.ws_worker import LIVE_TICKER_HASH_KEY, build_stream_url, handle_
 
 def test_build_stream_url() -> None:
     url = build_stream_url(["btcusdt", "ethusdt"])
-    assert url == (
-        "wss://stream.binance.com:9443/stream?streams=btcusdt@ticker/ethusdt@ticker"
-    )
+    assert url == ("wss://stream.binance.com:9443/stream?streams=btcusdt@ticker/ethusdt@ticker")
 
 
 async def test_handle_message_updates_hash(fake_redis) -> None:

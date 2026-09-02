@@ -18,7 +18,9 @@ async def _make_user(db_session, telegram_id: int) -> User:
 async def test_create_and_list_price_alert(db_session) -> None:
     user = await _make_user(db_session, 1)
 
-    alert = await create_price_alert(db_session, user.id, "BTC", {"operator": "above", "price": 100.0})
+    alert = await create_price_alert(
+        db_session, user.id, "BTC", {"operator": "above", "price": 100.0}
+    )
 
     assert alert.id is not None
     assert alert.symbol == "BTC"

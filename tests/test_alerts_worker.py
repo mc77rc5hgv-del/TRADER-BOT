@@ -25,7 +25,9 @@ class FakeMarketEngine:
         return MarketState(
             symbol=f"{symbol.upper()}USDT@binance",
             tf=tf,
-            ticker=Ticker(symbol=f"{symbol.upper()}USDT", price=self.price, price_change_percent_24h=1.0),
+            ticker=Ticker(
+                symbol=f"{symbol.upper()}USDT", price=self.price, price_change_percent_24h=1.0
+            ),
             candles=[],
             fetched_at=datetime.now(UTC),
         )
@@ -41,7 +43,9 @@ async def _make_user(db_session, telegram_id: int) -> User:
 
 async def test_triggered_alert_is_marked_and_delivered(db_session) -> None:
     user = await _make_user(db_session, 999)
-    alert = await create_price_alert(db_session, user.id, "BTC", {"operator": "above", "price": 100.0})
+    alert = await create_price_alert(
+        db_session, user.id, "BTC", {"operator": "above", "price": 100.0}
+    )
 
     bot = FakeBot()
     engine = FakeMarketEngine(price=105.0)

@@ -44,7 +44,9 @@ def test_long_setup_shape() -> None:
 
 
 def test_short_setup_shape() -> None:
-    result = compute(_snapshot(structure_bias="bearish", nearest_support=90.0, nearest_resistance=105.0), "short")
+    result = compute(
+        _snapshot(structure_bias="bearish", nearest_support=90.0, nearest_resistance=105.0), "short"
+    )
 
     assert result.direction == "short"
     assert result.entry_low < result.entry_high

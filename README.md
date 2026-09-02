@@ -3,7 +3,7 @@
 AI-платформа для трейдинга внутри Telegram (бот + Mini App). Продуктовое и
 техническое ТЗ MVP — в [`docs/TZ_MVP.md`](docs/TZ_MVP.md).
 
-Текущий этап: **Phase 1, шаг 12 — AI Accuracy + внутренняя аналитика** (см. раздел 13 ТЗ).
+Текущий этап: **Phase 1 завершена (13 из 13 шагов)** (см. раздел 13 ТЗ).
 
 ## Стек
 
@@ -356,6 +356,21 @@ python -m app.admin.report_cli
   поэтому `status` в этой системе никогда не переходит в EXPIRED/CANCELED
   сам по себе. «Churn» — это последняя подписка пользователя истекла в
   пределах окна и с тех пор не продлевалась.
+
+## Нагрузка и graceful degradation
+
+- `MarketDataEngine` использует single-flight для одновременных одинаковых
+  cache miss: 100 параллельных запросов одного символа/TF внутри процесса
+  разделяют один вызов Binance, после чего результат лежит в Redis.
+- Redis-backed rate limiter защищает HTTP API по Telegram authorization или
+  IP (`RATE_LIMIT_REQUESTS` запросов за `RATE_LIMIT_WINDOW_SECONDS`). При
+  недоступном Redis limiter fail-open, а платные AI-вызовы всё равно защищены
+  дневной тарифной квотой.
+- Если LLM недоступен или вернул невалидную структуру, пользователь получает
+  детерминированные probability/risk/entry/targets и явную пометку, что
+  текстовое AI-пояснение временно недоступно, вместо общей ошибки.
+- `railway.json` запускает миграции и Telegram polling worker одной командой;
+  токен и подключения к Postgres/Redis задаются только переменными Railway.
 
 ## Тесты
 

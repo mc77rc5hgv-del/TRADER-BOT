@@ -40,7 +40,9 @@ class _ScanCache(BaseModel):
     updated_at: str
 
 
-async def scan_symbol(market_engine: MarketDataEngine, symbol: str, tf: str = SCANNER_TF) -> ScannerEntry | None:
+async def scan_symbol(
+    market_engine: MarketDataEngine, symbol: str, tf: str = SCANNER_TF
+) -> ScannerEntry | None:
     market_state = await market_engine.get_market_state(symbol, tf)
     if market_state is None:
         return None

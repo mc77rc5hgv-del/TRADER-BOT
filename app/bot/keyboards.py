@@ -71,8 +71,12 @@ def alert_direction_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Выше ⬆️", callback_data=f"{CB_ALERT_DIRECTION_PREFIX}above"),
-                InlineKeyboardButton(text="Ниже ⬇️", callback_data=f"{CB_ALERT_DIRECTION_PREFIX}below"),
+                InlineKeyboardButton(
+                    text="Выше ⬆️", callback_data=f"{CB_ALERT_DIRECTION_PREFIX}above"
+                ),
+                InlineKeyboardButton(
+                    text="Ниже ⬇️", callback_data=f"{CB_ALERT_DIRECTION_PREFIX}below"
+                ),
             ],
             [InlineKeyboardButton(text="Отмена", callback_data=CB_ALERT_CANCEL)],
         ]
