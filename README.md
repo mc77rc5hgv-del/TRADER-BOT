@@ -3,7 +3,7 @@
 AI-платформа для трейдинга внутри Telegram (бот + Mini App). Продуктовое и
 техническое ТЗ MVP — в [`docs/TZ_MVP.md`](docs/TZ_MVP.md).
 
-Текущий этап: **Phase 1, шаг 3 — Technical Analysis / Probability / Risk engines** (см. раздел 13 ТЗ).
+Текущий этап: **Phase 1, шаг 4 — AI Reasoning Layer** (см. раздел 13 ТЗ).
 
 ## Стек
 
@@ -11,6 +11,7 @@ AI-платформа для трейдинга внутри Telegram (бот + 
 - Bot: aiogram 3
 - DB: PostgreSQL (async, SQLAlchemy 2.0) + Alembic
 - Cache/queues: Redis
+- LLM: Anthropic Claude (`claude-opus-5` по умолчанию) через provider-agnostic интерфейс
 - Mini App frontend: появится на шаге 7 (пока не реализован)
 
 ## Быстрый старт (dev)
@@ -67,6 +68,32 @@ Binance (topN ликвидных символов), который пишет li
 
 Все три модуля покрыты unit-тестами на синтетических сериях свечей
 (zigzag-тренды и боковик из `tests/factories.py`), без обращения к сети или БД.
+
+## AI Reasoning Layer
+
+LLM подключается последним звеном и никогда не считает цифры сам (TZ раздел 7):
+
+- `app/ai/provider.py` — `LLMProvider` — provider-agnostic интерфейс
+  (`generate_structured(system, user, response_model) -> (parsed, usage)`);
+  `AnthropicProvider` — реализация на `AsyncAnthropic().messages.parse()` со
+  structured output. Второй провайдер подключается без изменения остального кода.
+- `app/ai/scenarios.py` — детерминированный (не LLM) сплит вероятности на
+  основной/альтернативный/нейтральный сценарий, сумма всегда 100% (TZ 4.3).
+- `app/ai/context.py` — собирает сжатый JSON (`AnalysisContext`) из
+  `TechnicalSnapshot` + `ProbabilityResult` + `RiskLevels` — без сырых свечей.
+- `app/ai/prompt.py` — системный промпт прямым текстом запрещает модели
+  вводить любые числа, которых нет во входном JSON, и менять
+  direction/confidence/entry/targets/invalidation.
+- `app/ai/reasoning.py` — оркестратор: LLM отвечает только за `why`
+  (текстовые буллеты), все числа в итоговом `AnalysisResult` — из
+  детерминированных движков.
+- `app/ai/render.py` — форматирует `AnalysisResult` в текст по шаблону TZ
+  4.3, дисклеймер добавляется всегда, без исключений.
+- `app/ai/pricing.py` + `app/ai/usage.py` — оценка стоимости запроса и запись
+  в `ai_requests` для cost/DAU-дашборда (TZ раздел 11).
+
+Тесты используют `FakeLLMProvider`/фейковый Anthropic-клиент — реальных
+сетевых вызовов в тестовом наборе нет.
 
 ## Тесты
 

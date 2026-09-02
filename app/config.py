@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
 
     llm_api_key: str = ""
-    llm_model: str = ""
+    llm_model: str = "claude-opus-5"
 
     api_host: str = "0.0.0.0"
     api_port: int = 8000
