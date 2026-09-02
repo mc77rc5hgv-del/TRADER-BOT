@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import JSON, BigInteger, DateTime, Enum, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base
+from app.db.base import Base, enum_values
 
 
 class TradingStyle(str, enum.Enum):
@@ -35,10 +35,10 @@ class User(Base):
     locale: Mapped[str] = mapped_column(String(10), default="ru", server_default="ru")
 
     trading_style: Mapped[TradingStyle | None] = mapped_column(
-        Enum(TradingStyle, name="trading_style"), nullable=True
+        Enum(TradingStyle, name="trading_style", values_callable=enum_values), nullable=True
     )
     risk_profile: Mapped[RiskProfile | None] = mapped_column(
-        Enum(RiskProfile, name="risk_profile"), nullable=True
+        Enum(RiskProfile, name="risk_profile", values_callable=enum_values), nullable=True
     )
     preferred_markets: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
 

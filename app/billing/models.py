@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import DateTime, Enum, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
+from app.db.base import Base, enum_values
 
 
 class SubscriptionTier(str, enum.Enum):
@@ -27,12 +27,12 @@ class Subscription(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     tier: Mapped[SubscriptionTier] = mapped_column(
-        Enum(SubscriptionTier, name="subscription_tier"),
+        Enum(SubscriptionTier, name="subscription_tier", values_callable=enum_values),
         default=SubscriptionTier.FREE,
         server_default=SubscriptionTier.FREE.value,
     )
     status: Mapped[SubscriptionStatus] = mapped_column(
-        Enum(SubscriptionStatus, name="subscription_status"),
+        Enum(SubscriptionStatus, name="subscription_status", values_callable=enum_values),
         default=SubscriptionStatus.ACTIVE,
         server_default=SubscriptionStatus.ACTIVE.value,
     )

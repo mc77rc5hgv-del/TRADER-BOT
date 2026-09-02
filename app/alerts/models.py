@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
+from app.db.base import Base, enum_values
 
 
 class AlertType(str, enum.Enum):
@@ -31,15 +31,17 @@ class Alert(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     symbol: Mapped[str] = mapped_column(String(32), nullable=False)
-    type: Mapped[AlertType] = mapped_column(Enum(AlertType, name="alert_type"))
+    type: Mapped[AlertType] = mapped_column(
+        Enum(AlertType, name="alert_type", values_callable=enum_values)
+    )
     condition: Mapped[dict] = mapped_column(JSON, nullable=False)
     status: Mapped[AlertStatus] = mapped_column(
-        Enum(AlertStatus, name="alert_status"),
+        Enum(AlertStatus, name="alert_status", values_callable=enum_values),
         default=AlertStatus.ACTIVE,
         server_default=AlertStatus.ACTIVE.value,
     )
     delivery_mode: Mapped[DeliveryMode] = mapped_column(
-        Enum(DeliveryMode, name="alert_delivery_mode"),
+        Enum(DeliveryMode, name="alert_delivery_mode", values_callable=enum_values),
         default=DeliveryMode.NORMAL,
         server_default=DeliveryMode.NORMAL.value,
     )

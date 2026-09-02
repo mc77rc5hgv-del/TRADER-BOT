@@ -15,7 +15,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, Session, mapped_column
 
-from app.db.base import Base
+from app.db.base import Base, enum_values
 
 
 class PredictionDirection(str, enum.Enum):
@@ -70,22 +70,25 @@ class Prediction(Base):
     tf: Mapped[str] = mapped_column(String(8), nullable=False)
 
     direction: Mapped[PredictionDirection] = mapped_column(
-        Enum(PredictionDirection, name="prediction_direction")
+        Enum(PredictionDirection, name="prediction_direction", values_callable=enum_values)
     )
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
     entry_low: Mapped[float] = mapped_column(Float, nullable=False)
     entry_high: Mapped[float] = mapped_column(Float, nullable=False)
     targets: Mapped[list[float]] = mapped_column(JSON, nullable=False)
     invalidation: Mapped[float] = mapped_column(Float, nullable=False)
-    risk_level: Mapped[RiskLevel] = mapped_column(Enum(RiskLevel, name="prediction_risk_level"))
+    risk_level: Mapped[RiskLevel] = mapped_column(
+        Enum(RiskLevel, name="prediction_risk_level", values_callable=enum_values)
+    )
     factors: Mapped[dict] = mapped_column(JSON, nullable=False)
     source: Mapped[PredictionSource] = mapped_column(
-        Enum(PredictionSource, name="prediction_source")
+        Enum(PredictionSource, name="prediction_source", values_callable=enum_values)
     )
     model_version: Mapped[str] = mapped_column(String(50), nullable=False)
 
     outcome: Mapped[PredictionOutcome | None] = mapped_column(
-        Enum(PredictionOutcome, name="prediction_outcome"), nullable=True
+        Enum(PredictionOutcome, name="prediction_outcome", values_callable=enum_values),
+        nullable=True,
     )
     outcome_evaluated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
