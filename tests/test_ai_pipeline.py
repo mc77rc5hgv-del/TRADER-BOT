@@ -2,11 +2,14 @@ import pytest
 from sqlalchemy import select
 
 from app.ai.models import AIRequest, Prediction
-from app.ai.pipeline import SymbolNotRecognizedError, run_chat_analysis
+from app.ai.pipeline import QuotaExceededError, SymbolNotRecognizedError, run_chat_analysis
 from app.ai.provider import LLMProvider, LLMUsage
 from app.ai.schemas import AnalysisNarrative, WhyBullet
+from app.billing.models import SubscriptionTier
+from app.billing.service import TIER_LIMITS
 from app.market.schemas import Ticker
 from app.market.service import MarketDataEngine
+from app.users.models import User
 from tests.factories import generate_trend, make_candles
 
 
@@ -101,3 +104,34 @@ async def test_symbol_aliases_hit_shared_cache(fake_redis, db_session) -> None:
     predictions = (await db_session.execute(select(Prediction))).scalars().all()
     assert len(predictions) == 2  # two independent analyses/predictions...
     assert len({p.symbol for p in predictions}) == 1  # ...of the same canonical symbol
+
+
+async def _make_user(db_session, telegram_id: int) -> User:
+    user = User(telegram_id=telegram_id)
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
+
+
+async def test_analysis_under_quota_succeeds(fake_redis, db_session) -> None:
+    user = await _make_user(db_session, 100)
+    closes = generate_trend("up", cycles=6)
+    engine = MarketDataEngine(FakeBinanceClient(closes), fake_redis)
+
+    result = await run_chat_analysis("BTC", "1h", engine, FakeLLMProvider(), db_session, user.id)
+
+    assert result.scenarios is not None
+
+
+async def test_analysis_at_quota_raises(fake_redis, db_session) -> None:
+    user = await _make_user(db_session, 101)
+    closes = generate_trend("up", cycles=6)
+    engine = MarketDataEngine(FakeBinanceClient(closes), fake_redis)
+
+    free_limit = TIER_LIMITS[SubscriptionTier.FREE].ai_analyses_per_day
+    for _ in range(free_limit):
+        await run_chat_analysis("BTC", "1h", engine, FakeLLMProvider(), db_session, user.id)
+
+    with pytest.raises(QuotaExceededError):
+        await run_chat_analysis("BTC", "1h", engine, FakeLLMProvider(), db_session, user.id)

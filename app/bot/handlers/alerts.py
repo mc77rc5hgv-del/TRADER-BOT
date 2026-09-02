@@ -13,7 +13,8 @@ from app.alerts.repository import (
     create_price_alert,
     list_active_alerts_for_user,
 )
-from app.alerts.service import FREE_TIER_ACTIVE_ALERT_LIMIT, describe_condition
+from app.alerts.service import describe_condition
+from app.billing.service import get_tier_limits
 from app.bot.keyboards import (
     CB_ALERT_CANCEL,
     CB_ALERT_DIRECTION_PREFIX,
@@ -55,11 +56,13 @@ async def on_alert_new(callback: CallbackQuery, state: FSMContext) -> None:
     async with async_session_factory() as session:
         user = await get_or_create_user(session, callback.from_user.id, callback.from_user.username)
         active_count = await count_active_alerts(session, user.id)
+        limits = await get_tier_limits(session, user.id)
 
-    if active_count >= FREE_TIER_ACTIVE_ALERT_LIMIT:
+    if active_count >= limits.max_active_alerts:
         await callback.message.answer(
-            f"На бесплатном тарифе доступно до {FREE_TIER_ACTIVE_ALERT_LIMIT} активных алертов. "
-            "Дождитесь срабатывания одного из существующих, чтобы создать новый."
+            f"Доступно до {limits.max_active_alerts} активных алертов на вашем тарифе. "
+            "Дождитесь срабатывания одного из существующих, чтобы создать новый, "
+            "или оформите PRO (кнопка «💳 Подписка» в меню) для более высокого лимита."
         )
         await callback.answer()
         return

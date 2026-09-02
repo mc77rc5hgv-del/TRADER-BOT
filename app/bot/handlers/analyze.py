@@ -9,9 +9,10 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 
 from app.ai.dependencies import get_llm_provider
-from app.ai.pipeline import SymbolNotRecognizedError, run_chat_analysis
+from app.ai.pipeline import QuotaExceededError, SymbolNotRecognizedError, run_chat_analysis
 from app.ai.render import render_text
 from app.ai.timeframe import DEFAULT_TF
+from app.bot.messages import quota_exceeded_text
 from app.bot.repository import get_or_create_user
 from app.db.session import async_session_factory
 from app.market.router import get_market_data_engine
@@ -59,6 +60,9 @@ async def _run_and_reply(message: Message, symbol_raw: str, tf: str, silent_on_m
         except SymbolNotRecognizedError:
             if not silent_on_miss:
                 await message.answer(UNRECOGNIZED_SYMBOL_TEXT)
+            return
+        except QuotaExceededError as exc:
+            await message.answer(quota_exceeded_text(exc.limit))
             return
 
     await message.answer(render_text(result))

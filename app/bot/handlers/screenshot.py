@@ -11,10 +11,11 @@ from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMar
 
 from app.ai.dependencies import get_llm_provider, get_screenshot_storage
 from app.ai.models import PredictionSource
-from app.ai.pipeline import run_chat_analysis
+from app.ai.pipeline import QuotaExceededError, run_chat_analysis
 from app.ai.render import render_text
 from app.ai.screenshot_pipeline import ScreenshotAnalysisOutcome, run_screenshot_analysis
 from app.ai.timeframe import DEFAULT_TF
+from app.bot.messages import quota_exceeded_text
 from app.bot.repository import get_or_create_user
 from app.config import get_settings
 from app.db.session import async_session_factory
@@ -59,7 +60,11 @@ async def on_photo(message: Message) -> None:
 
     async with async_session_factory() as session:
         user = await get_or_create_user(session, message.from_user.id, message.from_user.username)
-        outcome = await run_screenshot_analysis(image_bytes, engine, provider, storage, session, user.id)
+        try:
+            outcome = await run_screenshot_analysis(image_bytes, engine, provider, storage, session, user.id)
+        except QuotaExceededError as exc:
+            await message.answer(quota_exceeded_text(exc.limit))
+            return
 
     await _reply_to_outcome(message, outcome)
 
@@ -95,9 +100,14 @@ async def on_symbol_choice(callback: CallbackQuery) -> None:
 
     async with async_session_factory() as session:
         user = await get_or_create_user(session, callback.from_user.id, callback.from_user.username)
-        result = await run_chat_analysis(
-            symbol, DEFAULT_TF, engine, provider, session, user.id, source=PredictionSource.SCREENSHOT
-        )
+        try:
+            result = await run_chat_analysis(
+                symbol, DEFAULT_TF, engine, provider, session, user.id, source=PredictionSource.SCREENSHOT
+            )
+        except QuotaExceededError as exc:
+            await callback.message.answer(quota_exceeded_text(exc.limit))
+            await callback.answer()
+            return
 
     await callback.message.answer(render_text(result))
     await callback.answer()

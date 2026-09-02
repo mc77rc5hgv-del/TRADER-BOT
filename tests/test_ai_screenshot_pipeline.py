@@ -1,15 +1,21 @@
 import io
 
+import pytest
 from PIL import Image
 from sqlalchemy import select
 
 from app.ai.models import AIRequest, Prediction, PredictionSource, Screenshot
+from app.ai.pipeline import QuotaExceededError
 from app.ai.provider import LLMProvider, LLMUsage
 from app.ai.schemas import AnalysisNarrative, VisionExtraction, WhyBullet
 from app.ai.screenshot_pipeline import run_screenshot_analysis
 from app.ai.screenshot_storage import ScreenshotStorage
+from app.ai.usage import record_ai_request
+from app.billing.models import SubscriptionTier
+from app.billing.service import TIER_LIMITS
 from app.market.schemas import Ticker
 from app.market.service import MarketDataEngine
+from app.users.models import User
 from tests.factories import generate_trend, make_candles
 
 
@@ -134,5 +140,34 @@ async def test_invalid_image_short_circuits_before_storage(fake_redis, db_sessio
     )
 
     assert outcome.status == "invalid_image"
+    assert storage.saved == {}
+    assert (await db_session.execute(select(Screenshot))).scalars().all() == []
+
+
+async def test_over_quota_rejects_before_vision_call(fake_redis, db_session) -> None:
+    user = User(telegram_id=99)
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    free_limit = TIER_LIMITS[SubscriptionTier.FREE].ai_analyses_per_day
+    for _ in range(free_limit):
+        await record_ai_request(
+            db_session, user.id, "chat_analysis", LLMUsage(model="fake-model", input_tokens=1, output_tokens=1), 1
+        )
+
+    closes = generate_trend("up", cycles=6)
+    engine = MarketDataEngine(FakeBinanceClient(closes), fake_redis)
+    provider = FakeLLMProvider(
+        VisionExtraction(symbol_guess="BTC", timeframe_guess="1h", exchange_guess="Binance", confidence="high")
+    )
+    storage = FakeScreenshotStorage()
+
+    with pytest.raises(QuotaExceededError):
+        await run_screenshot_analysis(
+            _sample_image_bytes(), engine, provider, storage, db_session, user_id=user.id
+        )
+
+    # rejected before the vision call ever ran - no wasted spend, no screenshot stored
     assert storage.saved == {}
     assert (await db_session.execute(select(Screenshot))).scalars().all() == []

@@ -12,6 +12,10 @@ settings = get_settings()
 CB_AI_ANALYSIS = "menu:ai_analysis"
 CB_SCANNER = "menu:scanner"
 CB_ALERTS = "menu:alerts"
+CB_BILLING = "menu:billing"
+
+# Callback data for the subscription screen (TZ section 8)
+CB_BILLING_BUY = "billing:buy"
 
 # Callback data for onboarding (TZ section 4.4)
 CB_STYLE_PREFIX = "onboarding:style:"
@@ -42,8 +46,17 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
 
     rows.append([InlineKeyboardButton(text="🔥 ЛУЧШИЕ СЕТАПЫ", callback_data=CB_SCANNER)])
     rows.append([InlineKeyboardButton(text="🔔 АЛЕРТЫ", callback_data=CB_ALERTS)])
+    rows.append([InlineKeyboardButton(text="💳 Подписка", callback_data=CB_BILLING)])
 
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def billing_keyboard(*, show_buy_button: bool) -> InlineKeyboardMarkup:
+    if not show_buy_button:
+        return InlineKeyboardMarkup(inline_keyboard=[])
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text="⭐ Купить PRO", callback_data=CB_BILLING_BUY)]]
+    )
 
 
 def alerts_list_keyboard() -> InlineKeyboardMarkup:

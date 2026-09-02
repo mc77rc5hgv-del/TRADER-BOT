@@ -16,7 +16,8 @@ from app.ai.models import RiskLevel as PredictionRiskLevel
 from app.ai.provider import LLMProvider
 from app.ai.reasoning import analyze as run_reasoning
 from app.ai.schemas import AnalysisResult
-from app.ai.usage import record_ai_request
+from app.ai.usage import count_analysis_requests_today, record_ai_request
+from app.billing.service import get_tier_limits
 from app.market.service import MarketDataEngine
 from app.probability.service import calculate as calculate_probability
 from app.risk.service import compute as compute_risk
@@ -28,6 +29,18 @@ class SymbolNotRecognizedError(Exception):
     callers should prompt the user to disambiguate rather than guess."""
 
 
+class QuotaExceededError(Exception):
+    """Raised when the user has hit their tier's daily AI-analysis limit
+    (TZ section 8). Callers should point the user at a PRO upgrade rather
+    than retry."""
+
+    def __init__(self, limit: int) -> None:
+        self.limit = limit
+        super().__init__(f"Daily AI analysis quota exceeded ({limit}/day)")
+
+
+# Must stay in sync with app.ai.usage.ANALYSIS_REQUEST_TYPES - these are the
+# ai_requests.type values that count against the daily quota.
 _AI_REQUEST_TYPE_BY_SOURCE = {
     PredictionSource.CHAT: "chat_analysis",
     PredictionSource.SCREENSHOT: "screenshot_analysis",
@@ -44,6 +57,12 @@ async def run_chat_analysis(
     user_id: int | None,
     source: PredictionSource = PredictionSource.CHAT,
 ) -> AnalysisResult:
+    if user_id is not None:
+        limits = await get_tier_limits(db_session, user_id)
+        used_today = await count_analysis_requests_today(db_session, user_id)
+        if used_today >= limits.ai_analyses_per_day:
+            raise QuotaExceededError(limits.ai_analyses_per_day)
+
     market_state = await market_engine.get_market_state(symbol_raw, tf)
     if market_state is None:
         raise SymbolNotRecognizedError(symbol_raw)

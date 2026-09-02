@@ -6,7 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from app.bot.handlers import alerts, analyze, menu, scanner, screenshot, start
+from app.bot.handlers import alerts, analyze, billing, menu, scanner, screenshot, start
 from app.config import get_settings
 
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +28,7 @@ async def main() -> None:
 
     dp.include_router(start.router)
     dp.include_router(menu.router)
+    dp.include_router(billing.router)
     dp.include_router(scanner.router)
     dp.include_router(screenshot.router)
     # alerts.router has state-scoped free-text handlers (symbol/price input

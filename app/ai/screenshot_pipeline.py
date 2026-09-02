@@ -15,12 +15,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.image_utils import InvalidImageError, strip_image_metadata
 from app.ai.models import PredictionSource, Screenshot
-from app.ai.pipeline import run_chat_analysis
+from app.ai.pipeline import QuotaExceededError, run_chat_analysis
 from app.ai.provider import LLMProvider
 from app.ai.schemas import AnalysisResult
 from app.ai.screenshot_storage import ScreenshotStorage
 from app.ai.timeframe import DEFAULT_TF, normalize_tf_guess
-from app.ai.usage import record_ai_request
+from app.ai.usage import count_analysis_requests_today, record_ai_request
+from app.billing.service import get_tier_limits
 from app.config import get_settings
 from app.market.service import MarketDataEngine
 from app.market.symbols import normalize_symbol, suggest_symbols
@@ -42,6 +43,11 @@ async def run_screenshot_analysis(
     user_id: int,
 ) -> ScreenshotAnalysisOutcome:
     settings = get_settings()
+
+    limits = await get_tier_limits(db_session, user_id)
+    used_today = await count_analysis_requests_today(db_session, user_id)
+    if used_today >= limits.ai_analyses_per_day:
+        raise QuotaExceededError(limits.ai_analyses_per_day)
 
     try:
         clean_bytes, media_type = await asyncio.to_thread(strip_image_metadata, image_bytes)

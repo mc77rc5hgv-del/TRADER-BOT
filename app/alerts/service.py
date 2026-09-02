@@ -7,8 +7,6 @@ from __future__ import annotations
 from app.alerts.models import Alert, AlertType
 from app.alerts.schemas import PriceAlertCondition
 
-FREE_TIER_ACTIVE_ALERT_LIMIT = 3
-
 
 def evaluate_price_condition(condition: dict, current_price: float) -> bool:
     parsed = PriceAlertCondition.model_validate(condition)

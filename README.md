@@ -3,7 +3,7 @@
 AI-платформа для трейдинга внутри Telegram (бот + Mini App). Продуктовое и
 техническое ТЗ MVP — в [`docs/TZ_MVP.md`](docs/TZ_MVP.md).
 
-Текущий этап: **Phase 1, шаг 10 — Scanner v0** (см. раздел 13 ТЗ).
+Текущий этап: **Phase 1, шаг 11 — Billing v0** (см. раздел 13 ТЗ).
 
 ## Стек
 
@@ -265,6 +265,41 @@ Profile в нижней навигации показаны как «скоро�
   (Все/Low/Medium/High), карточки со ссылкой на `/market/[symbol]`; кнопка
   на экране Market ведёт туда же. Проверено в браузере: список сортируется
   по confidence, фильтр по направлению корректно скрывает лишние карточки.
+
+## Billing v0
+
+Two tiers, FREE and PRO (TZ раздел 8/9), с оплатой через Telegram Stars —
+единственный платёжный метод, который не требует юрлица/эквайринга для MVP.
+
+- `app/billing/models.py` — `Subscription` (`tier`, `status`, `started_at`,
+  `expires_at`, `payment_provider`, `external_payment_id`). Каждая покупка —
+  **новая** строка, а не обновление старой: дёшево хранить историю покупок,
+  а `get_active_tier()`/`get_active_subscription()` всегда берут последнюю
+  ACTIVE и не истёкшую.
+- `app/billing/service.py` — `TIER_LIMITS`: FREE = 5 AI-анализов/день, 3
+  активных алерта; PRO = 50 AI-анализов/день, 20 активных алертов.
+  `PRO_PRICE_STARS = 300` (⭐/мес) — стартовая оценка (TZ: "$9-15/мес
+  эквивалент"), у Stars нет фиксированного курса к USD, править по факту.
+- **Дневная квота на AI-анализы** проверяется в
+  `app/ai/pipeline.py::run_chat_analysis()` **до** вызова LLM (`chat_analysis`
+  + `screenshot_analysis` из `ai_requests` за сегодня, `vision_extraction` не
+  считается — это внутренняя бухгалтерия скриншот-флоу, а не второй анализ
+  поверх него). Для скриншот-сценария квота проверяется **ещё раньше**, в
+  `app/ai/screenshot_pipeline.py::run_screenshot_analysis()`, до самого
+  дорогого шага (vision-извлечение тикера с картинки) — иначе пользователь
+  сверх квоты всё равно сжигал бы платный vision-запрос перед отказом.
+  Превышение — `QuotaExceededError`, боты (`analyze.py`, `screenshot.py`)
+  ловят её и показывают предложение оформить PRO.
+- **Лимит активных алертов** (`app/bot/handlers/alerts.py::on_alert_new`)
+  берётся из `billing.service.get_tier_limits()`, а не захардкожен — PRO
+  реально получает более высокий лимит.
+- `app/bot/handlers/billing.py` — экран «💳 Подписка» (кнопка в главном
+  меню): показывает текущий тариф и, для FREE, кнопку «⭐ Купить PRO»,
+  которая шлёт `bot.send_invoice(currency="XTR", ...)`. Провайдер-токен для
+  Stars — пустая строка (так требует Bot API). `pre_checkout_query`
+  подтверждается сразу (`ok=True`) — проверять тут нечего, товар один и с
+  фиксированной ценой. `successful_payment` вызывает
+  `activate_pro_subscription()` и подтверждает активацию сообщением.
 
 ## Тесты
 
