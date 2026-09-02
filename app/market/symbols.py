@@ -126,3 +126,9 @@ def normalize_symbol(raw: str) -> str | None:
                 return f"{base}{quote_canonical}@{DEFAULT_EXCHANGE}"
 
     return None
+
+
+def split_canonical_symbol(canonical: str) -> tuple[str, str]:
+    """Split a canonical symbol ("BTCUSDT@binance") into (pair, exchange)."""
+    pair, _, exchange = canonical.partition("@")
+    return pair, exchange or DEFAULT_EXCHANGE

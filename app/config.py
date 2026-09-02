@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     # https URL of the deployed Mini App (empty until Phase 1 step 7 ships it)
     mini_app_url: str = ""
 
+    # Shared market-state cache TTL, seconds (TZ section 5.3: 30-90s window)
+    market_cache_ttl_seconds: int = 60
+
 
 @lru_cache
 def get_settings() -> Settings:

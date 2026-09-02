@@ -3,7 +3,7 @@
 AI-платформа для трейдинга внутри Telegram (бот + Mini App). Продуктовое и
 техническое ТЗ MVP — в [`docs/TZ_MVP.md`](docs/TZ_MVP.md).
 
-Текущий этап: **Phase 1, шаг 1 — скелет и инфраструктура** (см. раздел 13 ТЗ).
+Текущий этап: **Phase 1, шаг 2 — Market Data Engine** (см. раздел 13 ТЗ).
 
 ## Стек
 
@@ -29,7 +29,24 @@ uvicorn app.main:app --reload
 
 # Bot (в отдельном терминале)
 python -m app.bot.main
+
+# Live-цены через WS (в отдельном терминале, опционально для dev)
+python -m app.market.ws_worker
 ```
+
+## Market Data Engine
+
+`GET /market/{symbol}/state?tf=1h` — вернёт нормализованный `MarketState`
+(тикер + свечи) для распознанного символа. `symbol` принимает любой алиас,
+который понимает `app/market/symbols.py` (`BTC`, `btc/usdt`, `биткоин`, ...).
+Результат кэшируется в Redis на `MARKET_CACHE_TTL_SECONDS` (по умолчанию 60с)
+— параллельные запросы разных пользователей по одному символу переиспользуют
+один и тот же fetch к Binance (TZ раздел 5.3).
+
+`app/market/ws_worker.py` — отдельный процесс с одним общим WS-соединением к
+Binance (topN ликвидных символов), который пишет live-цены в Redis-хэш
+`ticker:live`. Это не блокирует HTTP API и не открывает соединение на
+каждого пользователя (TZ разделы 5.1, 54).
 
 ## Тесты
 

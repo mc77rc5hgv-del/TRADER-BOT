@@ -1,6 +1,6 @@
 import pytest
 
-from app.market.symbols import normalize_symbol
+from app.market.symbols import normalize_symbol, split_canonical_symbol
 
 
 @pytest.mark.parametrize(
@@ -27,3 +27,8 @@ def test_normalize_known_symbols(raw: str, expected: str) -> None:
 @pytest.mark.parametrize("raw", ["", "   ", "not a real asset", "xyzabc123"])
 def test_normalize_unknown_returns_none(raw: str) -> None:
     assert normalize_symbol(raw) is None
+
+
+def test_split_canonical_symbol() -> None:
+    assert split_canonical_symbol("BTCUSDT@binance") == ("BTCUSDT", "binance")
+    assert split_canonical_symbol("BTCUSDT@bybit") == ("BTCUSDT", "bybit")
