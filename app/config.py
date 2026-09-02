@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     llm_api_key: str = ""
     llm_model: str = "claude-opus-5"
+    anthropic_workspace_id: str = ""
 
     api_host: str = "0.0.0.0"
     api_port: int = 8000
