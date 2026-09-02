@@ -3,7 +3,7 @@
 AI-платформа для трейдинга внутри Telegram (бот + Mini App). Продуктовое и
 техническое ТЗ MVP — в [`docs/TZ_MVP.md`](docs/TZ_MVP.md).
 
-Текущий этап: **Phase 1, шаг 2 — Market Data Engine** (см. раздел 13 ТЗ).
+Текущий этап: **Phase 1, шаг 3 — Technical Analysis / Probability / Risk engines** (см. раздел 13 ТЗ).
 
 ## Стек
 
@@ -47,6 +47,26 @@ python -m app.market.ws_worker
 Binance (topN ликвидных символов), который пишет live-цены в Redis-хэш
 `ticker:live`. Это не блокирует HTTP API и не открывает соединение на
 каждого пользователя (TZ разделы 5.1, 54).
+
+## Technical Analysis / Probability / Risk engines
+
+Три чистых, детерминированных модуля без единого обращения к LLM (TZ раздел
+48 — "AI не должен придумывать рынок"):
+
+- `app/ta/` — индикаторы (RSI, EMA20/50/200, ATR, тренд объёма) и структура
+  рынка (свинг-хаи/лоу, HH/HL/LH/LL, ближайшие support/resistance) поверх
+  списка свечей из Market Data Engine. `app/ta/service.py:analyze()` собирает
+  всё в один `TechnicalSnapshot`.
+- `app/probability/` — взвешенная сумма факторов (структура 30%, моментум
+  20%, объём 15%, S/R 20%, funding/OI 15% когда доступен — веса и границы
+  confidence вынесены в `app/probability/weights.py`) с sigmoid-калибровкой
+  в диапазон 35–85% confidence (TZ раздел 2.4).
+- `app/risk/` — на основе `TechnicalSnapshot` и выбранного направления
+  считает entry zone, invalidation (ATR-фолбэк или ближайший
+  support/resistance — берётся более тесный вариант) и 2 таргета на 1.5R/3R.
+
+Все три модуля покрыты unit-тестами на синтетических сериях свечей
+(zigzag-тренды и боковик из `tests/factories.py`), без обращения к сети или БД.
 
 ## Тесты
 
