@@ -2,13 +2,20 @@
 
 import { use, useEffect, useState } from "react";
 
-import { Chart } from "@/components/Chart";
-import { ApiError, getMarketState } from "@/lib/api";
-import { ALLOWED_TIMEFRAMES, DEFAULT_TIMEFRAME, type MarketState, type Timeframe } from "@/lib/types";
+import { AnalysisCard } from "@/components/AnalysisCard";
+import { Chart, type ChartLevels } from "@/components/Chart";
+import { analyzeSymbol, ApiError, getMarketState } from "@/lib/api";
+import { ALLOWED_TIMEFRAMES, DEFAULT_TIMEFRAME, type AnalysisResult, type MarketState, type Timeframe } from "@/lib/types";
 
 type LoadState =
   | { status: "loading" }
   | { status: "ready"; data: MarketState }
+  | { status: "error"; message: string };
+
+type AnalysisState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "ready"; data: AnalysisResult; symbol: string; tf: Timeframe }
   | { status: "error"; message: string };
 
 export default function MarketSymbolPage(props: PageProps<"/market/[symbol]">) {
@@ -16,6 +23,7 @@ export default function MarketSymbolPage(props: PageProps<"/market/[symbol]">) {
 
   const [tf, setTf] = useState<Timeframe>(DEFAULT_TIMEFRAME);
   const [load, setLoad] = useState<LoadState>({ status: "loading" });
+  const [analysis, setAnalysis] = useState<AnalysisState>({ status: "idle" });
 
   useEffect(() => {
     let cancelled = false;
@@ -38,8 +46,28 @@ export default function MarketSymbolPage(props: PageProps<"/market/[symbol]">) {
     };
   }, [symbol, tf]);
 
+  function runAnalysis() {
+    setAnalysis({ status: "loading" });
+    analyzeSymbol(symbol, tf)
+      .then((data) => setAnalysis({ status: "ready", data, symbol, tf }))
+      .catch(() => setAnalysis({ status: "error", message: "Не удалось получить анализ." }));
+  }
+
   const state = load.status === "ready" ? load.data : null;
   const isUp = (state?.ticker.price_change_percent_24h ?? 0) >= 0;
+  // Stale results (from before a symbol/TF change) are dropped at render
+  // time rather than reset via an effect — simpler and avoids an extra
+  // render pass.
+  const result =
+    analysis.status === "ready" && analysis.symbol === symbol && analysis.tf === tf ? analysis.data : null;
+  const levels: ChartLevels | undefined = result
+    ? {
+        entryLow: result.entry_low,
+        entryHigh: result.entry_high,
+        invalidation: result.invalidation,
+        targets: result.targets,
+      }
+    : undefined;
 
   return (
     <div className="mx-auto max-w-md px-4 py-6">
@@ -77,7 +105,25 @@ export default function MarketSymbolPage(props: PageProps<"/market/[symbol]">) {
 
       {load.status === "error" && <p className="text-sm text-red-400">{load.message}</p>}
       {load.status === "loading" && <p className="text-sm text-zinc-500">Загрузка графика…</p>}
-      {state && <Chart candles={state.candles} />}
+      {state && <Chart candles={state.candles} levels={levels} />}
+
+      {state && (
+        <button
+          type="button"
+          onClick={runAnalysis}
+          disabled={analysis.status === "loading"}
+          className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-60"
+        >
+          {analysis.status === "loading" ? "⏳ Анализирую…" : "✨ AI ANALYSIS"}
+        </button>
+      )}
+
+      {analysis.status === "error" && <p className="mt-3 text-sm text-red-400">{analysis.message}</p>}
+      {result && (
+        <div className="mt-4">
+          <AnalysisCard result={result} />
+        </div>
+      )}
     </div>
   );
 }

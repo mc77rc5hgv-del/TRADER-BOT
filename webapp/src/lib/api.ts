@@ -1,5 +1,5 @@
 import { getInitData } from "./telegram";
-import type { MarketState } from "./types";
+import type { AnalysisResult, MarketState } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -38,4 +38,12 @@ export function getMarketState(symbol: string, tf: string): Promise<MarketState>
 
 export function authenticateWebApp(): Promise<{ ok: boolean }> {
   return request("/webapp/auth", { method: "POST" });
+}
+
+export function analyzeSymbol(symbol: string, tf: string): Promise<AnalysisResult> {
+  return request<AnalysisResult>("/webapp/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ symbol, tf }),
+  });
 }

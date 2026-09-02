@@ -32,3 +32,32 @@ export const DEFAULT_TIMEFRAME: Timeframe = "1h";
 
 // Mirrors app.market.ws_worker.TRACKED_SYMBOLS (top liquid symbols).
 export const TRACKED_SYMBOLS = ["BTC", "ETH", "SOL", "XRP", "BNB"] as const;
+
+// Mirrors app/ai/schemas.py — the AI Reasoning Layer's output. Every number
+// here came from the deterministic engines, never from the LLM itself.
+
+export interface ScenarioSplit {
+  primary_direction: "long" | "short";
+  primary_confidence: number;
+  opposite_confidence: number;
+  neutral_confidence: number;
+}
+
+export interface WhyBullet {
+  sign: "+" | "-";
+  text: string;
+}
+
+export interface AnalysisResult {
+  symbol: string;
+  tf: string;
+  structure_bias: "bullish" | "bearish" | "neutral";
+  scenarios: ScenarioSplit | null;
+  entry_low: number | null;
+  entry_high: number | null;
+  invalidation: number | null;
+  targets: number[] | null;
+  risk_reward: number | null;
+  why: WhyBullet[];
+  disclaimer: string;
+}
