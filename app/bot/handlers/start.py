@@ -8,7 +8,7 @@ from app.bot.keyboards import (
     CB_RISK_PREFIX,
     CB_SKIP,
     CB_STYLE_PREFIX,
-    main_menu_keyboard,
+    main_reply_keyboard,
     preferred_markets_keyboard,
     risk_profile_keyboard,
     trading_style_keyboard,
@@ -104,5 +104,8 @@ async def onboarding_markets_skip(callback: CallbackQuery, state: FSMContext) ->
 
 async def _finish_onboarding(callback: CallbackQuery, state: FSMContext) -> None:
     await state.clear()
-    await callback.message.edit_text(MAIN_MENU_TEXT, reply_markup=main_menu_keyboard())
+    await callback.message.edit_text("Готово! Настройки сохранены ✅")
+    # A persistent reply keyboard can only be attached to a new message, not
+    # via edit_text - hence the follow-up message here.
+    await callback.message.answer(MAIN_MENU_TEXT, reply_markup=main_reply_keyboard())
     await callback.answer()

@@ -20,7 +20,7 @@ from app.billing.service import (
     get_active_subscription,
     get_active_tier,
 )
-from app.bot.keyboards import CB_BILLING, CB_BILLING_BUY, billing_keyboard
+from app.bot.keyboards import BTN_BILLING, CB_BILLING, CB_BILLING_BUY, billing_keyboard
 from app.bot.repository import get_or_create_user
 from app.db.session import async_session_factory
 
@@ -56,6 +56,15 @@ async def _billing_text(session, user_id: int) -> tuple[str, bool]:
         f"Цена: {PRO_PRICE_STARS} ⭐ / {PRO_SUBSCRIPTION_DURATION_DAYS} дней"
     )
     return text, True
+
+
+@router.message(F.text == BTN_BILLING)
+async def on_billing_button(message: Message) -> None:
+    async with async_session_factory() as session:
+        user = await get_or_create_user(session, message.from_user.id, message.from_user.username)
+        text, show_buy_button = await _billing_text(session, user.id)
+
+    await message.answer(text, reply_markup=billing_keyboard(show_buy_button=show_buy_button))
 
 
 @router.callback_query(F.data == CB_BILLING)

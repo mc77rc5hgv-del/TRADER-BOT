@@ -4,11 +4,11 @@ daily report the Mini App reads from GET /webapp/accuracy."""
 from __future__ import annotations
 
 from aiogram import F, Router
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, Message
 
 from app.ai.accuracy import compute_accuracy_report, get_cached_accuracy_report
 from app.ai.schemas import AccuracyReport
-from app.bot.keyboards import CB_ACCURACY
+from app.bot.keyboards import BTN_ACCURACY, CB_ACCURACY
 from app.core.redis import get_redis
 from app.db.session import async_session_factory
 
@@ -51,13 +51,21 @@ def _render_report(report: AccuracyReport) -> str:
     return "\n".join(lines)
 
 
-@router.callback_query(F.data == CB_ACCURACY)
-async def on_accuracy(callback: CallbackQuery) -> None:
+async def _get_report() -> AccuracyReport:
     redis = get_redis()
     report = await get_cached_accuracy_report(redis)
     if report is None:
         async with async_session_factory() as session:
             report = await compute_accuracy_report(session)
+    return report
 
-    await callback.message.answer(_render_report(report))
+
+@router.message(F.text == BTN_ACCURACY)
+async def on_accuracy_button(message: Message) -> None:
+    await message.answer(_render_report(await _get_report()))
+
+
+@router.callback_query(F.data == CB_ACCURACY)
+async def on_accuracy(callback: CallbackQuery) -> None:
+    await callback.message.answer(_render_report(await _get_report()))
     await callback.answer()

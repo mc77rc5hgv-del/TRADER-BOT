@@ -9,7 +9,7 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
-from app.bot.keyboards import CB_SCANNER
+from app.bot.keyboards import BTN_SCANNER, CB_SCANNER
 from app.core.redis import get_redis
 from app.scanner.schemas import ScannerEntry
 from app.scanner.service import get_cached_scan_results
@@ -56,6 +56,11 @@ async def _render_digest() -> str:
 
 @router.message(Command("scanner"))
 async def cmd_scanner(message: Message) -> None:
+    await message.answer(await _render_digest())
+
+
+@router.message(F.text == BTN_SCANNER)
+async def on_scanner_button(message: Message) -> None:
     await message.answer(await _render_digest())
 
 

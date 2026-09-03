@@ -16,6 +16,7 @@ from app.alerts.repository import (
 from app.alerts.service import describe_condition
 from app.billing.service import get_tier_limits
 from app.bot.keyboards import (
+    BTN_ALERTS,
     CB_ALERT_CANCEL,
     CB_ALERT_DIRECTION_PREFIX,
     CB_ALERT_NEW,
@@ -39,6 +40,15 @@ async def _render_alerts_list(session: AsyncSession, user: User) -> str:
         return "🔔 У вас пока нет активных алертов."
     lines = [f"• {a.symbol} — {describe_condition(a.condition)}" for a in alerts]
     return "🔔 Ваши активные алерты:\n" + "\n".join(lines)
+
+
+@router.message(F.text == BTN_ALERTS)
+async def on_alerts_button(message: Message) -> None:
+    async with async_session_factory() as session:
+        user = await get_or_create_user(session, message.from_user.id, message.from_user.username)
+        text = await _render_alerts_list(session, user)
+
+    await message.answer(text, reply_markup=alerts_list_keyboard())
 
 
 @router.callback_query(F.data == CB_ALERTS)

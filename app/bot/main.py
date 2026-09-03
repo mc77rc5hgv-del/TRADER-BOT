@@ -5,6 +5,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import MenuButtonCommands, MenuButtonWebApp, WebAppInfo
 
 from app.bot.handlers import accuracy, alerts, analyze, billing, menu, scanner, screenshot, start
 from app.config import get_settings
@@ -22,6 +23,16 @@ async def main() -> None:
         token=settings.telegram_bot_token,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
+    # Chat menu button (the icon to the left of the message input) - a
+    # one-tap Mini App launcher independent of the persistent reply keyboard
+    # below the input, which carries the rest of the navigation instead.
+    if settings.mini_app_url:
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(text="Терминал", web_app=WebAppInfo(url=settings.mini_app_url))
+        )
+    else:
+        await bot.set_chat_menu_button(menu_button=MenuButtonCommands())
+
     # MemoryStorage is fine for a single dev/staging instance; a multi-instance
     # deployment must switch to RedisStorage so FSM state is shared.
     dp = Dispatcher(storage=MemoryStorage())

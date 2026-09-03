@@ -3,7 +3,7 @@ from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
 from app.bot.handlers.start import MAIN_MENU_TEXT
-from app.bot.keyboards import CB_AI_ANALYSIS, main_menu_keyboard
+from app.bot.keyboards import BTN_AI_ANALYSIS, CB_AI_ANALYSIS, main_reply_keyboard
 from app.bot.repository import get_or_create_user
 from app.db.session import async_session_factory
 
@@ -21,7 +21,12 @@ AI_ANALYSIS_PROMPT = (
 async def cmd_app(message: Message) -> None:
     async with async_session_factory() as session:
         await get_or_create_user(session, message.from_user.id, message.from_user.username)
-    await message.answer(MAIN_MENU_TEXT, reply_markup=main_menu_keyboard())
+    await message.answer(MAIN_MENU_TEXT, reply_markup=main_reply_keyboard())
+
+
+@router.message(F.text == BTN_AI_ANALYSIS)
+async def on_ai_analysis_button(message: Message) -> None:
+    await message.answer(AI_ANALYSIS_PROMPT)
 
 
 @router.callback_query(F.data == CB_AI_ANALYSIS)

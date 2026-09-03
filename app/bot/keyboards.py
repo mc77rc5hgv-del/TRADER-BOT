@@ -1,19 +1,30 @@
 from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    WebAppInfo,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
 )
 
-from app.config import get_settings
-
-settings = get_settings()
-
-# Callback data for the main menu (TZ section 4.1)
+# Callback data kept for backward compatibility with inline buttons already
+# sent to users before the persistent reply keyboard replaced them as the
+# primary navigation (TZ section 4.1) — the callback handlers still work if
+# someone taps an old message, they're just no longer how new messages
+# reach these screens.
 CB_AI_ANALYSIS = "menu:ai_analysis"
 CB_SCANNER = "menu:scanner"
 CB_ALERTS = "menu:alerts"
 CB_BILLING = "menu:billing"
 CB_ACCURACY = "menu:accuracy"
+
+# Persistent reply-keyboard button labels (shown below the message input,
+# unlike inline keyboards which scroll away with their message) - the
+# primary navigation. Mini App access lives in the chat menu button instead
+# (see app/bot/main.py's set_chat_menu_button), not duplicated here.
+BTN_AI_ANALYSIS = "✨ AI анализ"
+BTN_SCANNER = "🔥 Сетапы"
+BTN_ALERTS = "🔔 Алерты"
+BTN_ACCURACY = "📊 Точность AI"
+BTN_BILLING = "💳 Подписка"
 
 # Callback data for the subscription screen (TZ section 8)
 CB_BILLING_BUY = "billing:buy"
@@ -30,27 +41,16 @@ CB_ALERT_DIRECTION_PREFIX = "alerts:dir:"
 CB_ALERT_CANCEL = "alerts:cancel"
 
 
-def main_menu_keyboard() -> InlineKeyboardMarkup:
-    rows = [
-        [InlineKeyboardButton(text="✨ AI АНАЛИЗ", callback_data=CB_AI_ANALYSIS)],
-    ]
-
-    if settings.mini_app_url:
-        rows.append(
-            [
-                InlineKeyboardButton(
-                    text="📊 ОТКРЫТЬ ТЕРМИНАЛ",
-                    web_app=WebAppInfo(url=settings.mini_app_url),
-                )
-            ]
-        )
-
-    rows.append([InlineKeyboardButton(text="🔥 ЛУЧШИЕ СЕТАПЫ", callback_data=CB_SCANNER)])
-    rows.append([InlineKeyboardButton(text="🔔 АЛЕРТЫ", callback_data=CB_ALERTS)])
-    rows.append([InlineKeyboardButton(text="💳 Подписка", callback_data=CB_BILLING)])
-    rows.append([InlineKeyboardButton(text="📊 Точность AI", callback_data=CB_ACCURACY)])
-
-    return InlineKeyboardMarkup(inline_keyboard=rows)
+def main_reply_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=BTN_AI_ANALYSIS), KeyboardButton(text=BTN_SCANNER)],
+            [KeyboardButton(text=BTN_ALERTS), KeyboardButton(text=BTN_ACCURACY)],
+            [KeyboardButton(text=BTN_BILLING)],
+        ],
+        resize_keyboard=True,
+        is_persistent=True,
+    )
 
 
 def billing_keyboard(*, show_buy_button: bool) -> InlineKeyboardMarkup:
