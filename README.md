@@ -369,8 +369,23 @@ python -m app.admin.report_cli
 - Если LLM недоступен или вернул невалидную структуру, пользователь получает
   детерминированные probability/risk/entry/targets и явную пометку, что
   текстовое AI-пояснение временно недоступно, вместо общей ошибки.
-- `railway.json` запускает миграции и Telegram polling worker одной командой;
-  токен и подключения к Postgres/Redis задаются только переменными Railway.
+- `railway.json` описывает только сервис бота: миграции + Telegram polling
+  одной командой. Остальные процессы — отдельные Railway-сервисы на том же
+  репозитории/ветке (start command задан напрямую в Railway, не в репо):
+  `trader-api` (`uvicorn app.main:app`, публичный домен, health-check
+  `/health`), `trader-ws-worker` (`python -m app.market.ws_worker`),
+  `trader-scanner-worker` (`python -m app.scanner.worker`),
+  `trader-alerts-worker` (`python -m app.alerts.worker`),
+  `trader-accuracy-worker` (`python -m app.ai.accuracy_worker`). Все шесть
+  сервисов используют общие Postgres/Redis плагины проекта; `DATABASE_URL`
+  должен быть в форме `postgresql+asyncpg://...` (нативная Railway-переменная
+  Postgres-плагина отдаёт обычный `postgresql://`, с которым SQLAlchemy
+  пытается подключить `psycopg2`, а не `asyncpg`, и падает — поэтому
+  воркеры/API берут `DATABASE_URL` через reference-переменную на уже
+  настроенный сервис бота, а не напрямую с Postgres-плагина). Миграции
+  запускаются один раз, из старт-команды `trader-bot`.
+- Frontend (`webapp/`, Next.js) пока никуда не задеплоен — `MINI_APP_URL` не
+  задан, поэтому кнопка «📊 ОТКРЫТЬ ТЕРМИНАЛ» в боте скрыта.
 
 ## Тесты
 
