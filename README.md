@@ -384,8 +384,12 @@ python -m app.admin.report_cli
   воркеры/API берут `DATABASE_URL` через reference-переменную на уже
   настроенный сервис бота, а не напрямую с Postgres-плагина). Миграции
   запускаются один раз, из старт-команды `trader-bot`.
-- Frontend (`webapp/`, Next.js) пока никуда не задеплоен — `MINI_APP_URL` не
-  задан, поэтому кнопка «📊 ОТКРЫТЬ ТЕРМИНАЛ» в боте скрыта.
+- Frontend (`webapp/`, Next.js) — ещё один Railway-сервис, `trader-webapp`
+  (root directory `webapp`, `npm install && npm run build` / `npm start`,
+  публичный домен). `NEXT_PUBLIC_API_BASE_URL` указывает на домен
+  `trader-api`; `MINI_APP_URL` на этот же домен задан и на `trader-bot`
+  (показывает кнопку «📊 ОТКРЫТЬ ТЕРМИНАЛ»), и на `trader-api` (попадает в
+  `cors_allow_origins_list`, иначе браузер блокирует запросы Mini App к API).
 
 ## Тесты
 
